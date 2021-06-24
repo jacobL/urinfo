@@ -1,0 +1,263 @@
+ 
+<!-- Content Header (Page header) -->
+
+<script>     
+//var ajaxUrlPort = '127.0.0.1:85'; //桌機 python flask server; not apache http
+ 
+var ajaxUrlPort = 'pc89600059495s:85'; //HPC idap均銘開發
+var ajaxUrlPort = '10.55.23.168:31081'; //HPC idap均銘開發
+function keyword_search(language){ 
+	keyword = $('#searchKeyword_'+language).val().trim();
+	if(language == 'tw'){
+		keyword_tw = keyword
+	}else{
+		keyword_tw = $('#searchKeyword_'+language+'_zh-tw').val().trim();
+	}	
+	//alert(keyword+' '+PERNR+' '+userChineseName)
+	if(keyword.length > 1){
+		$.ajax({
+			url: "http://"+ajaxUrlPort+"/keyword_search",
+			type: "GET",
+			dataType: 'json',
+			data:{keyword:keyword, keyword_tw:keyword_tw, language:language, PERNR:PERNR, userChineseName:userChineseName},
+			contentType: "application/json; charset=utf-8",
+			success: function (data) {
+				console.log('keyword_search:')
+				console.log(data) 
+				newsList = data['newsList'];
+				if(Object.keys(newsList).length > 0){
+					htmlData = ""
+					no = 1;
+					
+					for(i in newsList){					
+						id = newsList[i]['id']
+						web = newsList[i]['web']
+						title = newsList[i]['title']
+						content = newsList[i]['content']
+						publishdate = newsList[i]['publishdate']
+						url = newsList[i]['url']
+						 
+						htmlData = htmlData+"<tr style='font-size:14px;' ><td>"+no+"</td>";
+						htmlData = htmlData+"<td><a href='"+url+"' target='_blank'>"+title+"</a></td>";
+						htmlData = htmlData+"<td>"+publishdate+"</td></tr>";
+						no++;
+					}
+					$('#news_list_'+language).html(htmlData);
+					$('#resultCount_'+language).html('結果:'+(no-1)+'筆');
+					$('#news_table_'+language).show();   
+				}else{
+					$('#resultCount_'+language).html('結果:0筆');
+				}
+				get_keywordsearch_log();
+					
+			},				
+			error: function(xhr) {
+			  alert('Ajax request 發生錯誤:'+JSON.stringify(xhr)); 
+			}
+		});
+		
+	}else{
+		//$("#news_table").hide();
+		//$('#resultCount').html('');
+		//$("#news_table").hide(); 
+		alert('請確認字串長度不能太短');
+	}	
+}
+ 
+
+function get_keywordsearch_log_admin(){
+	$.ajax({
+		url: "http://"+ajaxUrlPort+"/get_keywordsearch_log_admin",
+		type: "GET",
+		dataType: 'json',
+		//data:{PERNR:PERNR},
+		contentType: "application/json; charset=utf-8",
+		success: function (data) {
+			keywordsearch_log = data['keywordsearch_log']
+			console.log('keywordsearch_log:')
+			console.log(keywordsearch_log)
+			if(Object.keys(keywordsearch_log).length > 0){
+				htmlData_tw = ""
+				htmlData_ja = ""
+				htmlData_ko = ""
+				no_tw = 1;
+				no_ja = 1;
+				no_ko = 1;
+				for(i in keywordsearch_log){
+					keyword = keywordsearch_log[i]['keyword']
+					keyword_tw = keywordsearch_log[i]['keyword_tw']
+					language = keywordsearch_log[i]['language']
+					resultCount = keywordsearch_log[i]['resultCount']
+					creationdate = keywordsearch_log[i]['creationdate']
+					PERNRTmp = keywordsearch_log[i]['PERNR']
+					userChineseName = keywordsearch_log[i]['userChineseName']
+					if(language == 'tw'){ 
+						if(no_tw%2 == 1) trClass = "odd"; else trClass = "even";
+						htmlData_tw = htmlData_tw+"<tr style='font-size:14px;' class='"+trClass+"'><td>"+no_tw+"</td>";
+						htmlData_tw = htmlData_tw+"<td>"+userChineseName+"("+PERNRTmp+")</td>";
+						htmlData_tw = htmlData_tw+"<td>"+keyword+"</td>";
+						htmlData_tw = htmlData_tw+"<td>"+resultCount+"</td>";
+						htmlData_tw = htmlData_tw+"<td>"+creationdate+"</td></tr>";											
+						no_tw++;
+					}else if(language == 'jp'){ 
+						if(no_ja%2 == 1) trClass = "odd"; else trClass = "even";
+						htmlData_ja = htmlData_ja+"<tr style='font-size:14px;' class='"+trClass+"'><td>"+no_ja+"</td>";
+						htmlData_ja = htmlData_ja+"<td>"+userChineseName+"("+PERNRTmp+")</td>";
+						htmlData_ja = htmlData_ja+"<td>"+keyword+"</td>";
+						htmlData_ja = htmlData_ja+"<td>"+keyword_tw+"</td>";
+						htmlData_ja = htmlData_ja+"<td>"+resultCount+"</td>";
+						htmlData_ja = htmlData_ja+"<td>"+creationdate+"</td></tr>";											
+						no_ja++;					
+					}else if(language == 'ko'){ 
+						if(no_ko%2 == 1) trClass = "odd"; else trClass = "even";
+						htmlData_ko = htmlData_ko+"<tr style='font-size:14px;' class='"+trClass+"'><td>"+no_ko+"</td>";
+						htmlData_ko = htmlData_ko+"<td>"+userChineseName+"("+PERNRTmp+")</td>";
+						htmlData_ko = htmlData_ko+"<td>"+keyword+"</td>";
+						htmlData_ko = htmlData_ko+"<td>"+keyword_tw+"</td>";
+						htmlData_ko = htmlData_ko+"<td>"+resultCount+"</td>";
+						htmlData_ko = htmlData_ko+"<td>"+creationdate+"</td></tr>";											
+						no_ko++;
+					}					
+				}
+				
+				if(no_tw > 1){
+					$('#news_search_log_tw').html(htmlData_tw);
+					$('#news_search_log_table_tw').show();
+				}
+				if(no_ja > 1){
+					$('#news_search_log_ja').html(htmlData_ja);
+					$('#news_search_log_table_ja').show();
+				}
+				if(no_ko > 1){
+					$('#news_search_log_ko').html(htmlData_ko);
+					$('#news_search_log_table_ko').show();
+				}
+			}				
+		},				
+		error: function(xhr) {
+		  alert('Ajax get_keywordsearch_log_admin 發生錯誤:'+JSON.stringify(xhr)); 
+		}
+	});	
+}
+
+$(document).ready(function(){
+	get_keywordsearch_log_admin();
+});	
+
+
+</script>
+<section class="content-header">
+  <h1>
+    新聞查詢Admin
+    <small>中日韓新聞 使用者關鍵字查詢Log</small>
+  </h1>
+  <ol class="breadcrumb">
+    <li><a href="#"><i class="fa fa-dashboard"></i>首頁</a></li>
+    <li class="active">新聞查詢Admin</li>
+  </ol>
+</section>
+
+<section class="content">
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="box">
+        <div class="box-header">
+          <!--3 class="box-title">使用+代表(AND)交集與空格代表(OR)聯集</h3-->
+        </div>
+        <div class="box-body">
+		<div class="nav-tabs-custom">
+		<ul class="nav nav-tabs pull-right">		   
+		  <li><a href="#tab_1-3" data-toggle="tab">韓國網站</a></li>
+		  <li><a href="#tab_1-2" data-toggle="tab">日本網站</a></li>		  
+		  <li class="active"><a href="#tab_1-1" data-toggle="tab">中文網站</a></li>
+		  <li class="pull-left header"><i class="fa fa-search"></i>中.日.韓 新聞查詢Log</li>
+		</ul>
+		<div class="tab-content">
+		  <div class="tab-pane active" id="tab_1-1">			
+			<div id="news_search_log_table_tw" class="panel box box-primary" style="display:none;">
+			  <div class="box-header with-border">
+			    <h4 class="box-title">
+				  查詢歷程
+			    </h4>
+			 </div>
+				<table  class="table table-bordered table-hover text-center table-striped">
+				  <thead>
+					<tr> 
+					  <th style="width:35px;">no</th>
+					  <th style="width:140px;">姓名(工號)</th>
+					  <th style="width:500px;">關鍵字</th>
+					  <th style="width:100px;">新聞筆數</th>
+					  <th style="width:150px;">查詢日期</th>					  
+					</tr>
+				  </thead>
+				  <tbody id="news_search_log_tw">              
+				  </tbody> 
+				</table>
+			</div> 
+		  </div> 
+		  
+		  <div class="tab-pane " id="tab_1-2">
+		    
+			
+			
+			<div id="news_search_log_table_ja" class="panel box box-primary" style="display:none;">
+			  <div class="box-header with-border">
+			    <h4 class="box-title">
+				  查詢歷程
+			    </h4>
+			  </div>
+				<table  class="table table-bordered table-hover text-center table-striped">
+				  <thead>
+					<tr> 
+					  <th style="width:35px;">no</th>
+					  <th style="width:140px;">姓名(工號)</th>
+					  <th style="width:250px;">日文關鍵字</th>
+					  <th style="width:250px;">中文關鍵字</th>
+					  <th style="width:100px;">新聞筆數</th>
+					  <th style="width:150px;">查詢日期</th>					  
+					</tr>
+				  </thead>
+				  <tbody id="news_search_log_ja">              
+				  </tbody> 
+				</table>
+			</div> 
+		  </div>
+		  
+		  <div class="tab-pane " id="tab_1-3">
+		    
+			
+			
+			<div id="news_search_log_table_ko" class="panel box box-primary" style="display:none;">
+			  <div class="box-header with-border">
+			    <h4 class="box-title">
+				  查詢歷程
+			    </h4>
+			  </div>
+				<table  class="table table-bordered table-hover text-center table-striped">
+				  <thead>
+					<tr> 
+					  <th style="width:35px;">no</th>
+					  <th style="width:140px;">姓名(工號)</th>
+					  <th style="width:250px;">韓文關鍵字</th>
+					  <th style="width:250px;">中文關鍵字</th>
+					  <th style="width:100px;">新聞筆數</th>
+					  <th style="width:150px;">查詢日期</th>					  
+					</tr>
+				  </thead>
+				  <tbody id="news_search_log_ko">              
+				  </tbody> 
+				</table>
+			</div> 
+		  </div>
+		</div>
+	  </div>
+		  
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row"> 
+	 
+  </div> 
+</section> 

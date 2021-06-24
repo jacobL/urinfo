@@ -1,0 +1,368 @@
+  
+  <style>
+#chartdiv {
+  width: 100%;
+  height: 100%;
+}
+</style>
+
+<!--script src="../js/coq/coqJS.js"></script-->
+
+
+<!-- amcharts Resources -->
+<!--script src="https://cdn.amcharts.com/lib/4/core.js"></script>
+<script src="https://cdn.amcharts.com/lib/4/maps.js"></script>
+<script src="https://cdn.amcharts.com/lib/4/geodata/worldHigh.js"></script>
+<script src="https://cdn.amcharts.com/lib/4/themes/animated.js"></script> 
+
+<link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+<script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script-->
+<style> 
+ 
+</style>   
+
+
+<script type="text/javascript">
+var eventtypeName = {'野火':'burning','洪水':'flood','火山爆發':'volcano','地震':'earthquake','流感':'virus','海嘯':'tsunami',
+'風災':'typhoon','大雪':'snow','暴雨':'rainy','霾':'mist','沙暴':'sandstorm','爆炸':'explosion','新冠肺炎':'covid-19',
+'停工':'strick','停水':'wateroutage','停電':'poweroutage','戰爭':'war','冰雹':'hail'};
+
+//var ajaxUrlPort = '127.0.0.1:81'; //桌機 python flask server; not apache http
+var ajaxUrlPort = 'pc89600059495s:85'; //HPC idap均銘開發
+var ajaxUrlPort = '10.55.23.168:31081'; //HPC idap均銘開發
+ 
+var currentPath = window.location.href;
+//var ssoUrl = "http://10.55.8.201:83/Publish/api/SSO"; //IT 01
+var ssoUrl = "http://10.55.8.136:2400/api/SSO"; //ID 136
+   
+$(document).ready(function() { 
+	userChineseName = 'gg' 
+ 	$('#userChineseName').html(userChineseName+' 您好');
+	
+	setTimeout(function(){
+		//getEvent()
+		getDisaster(); 
+	},0);	
+	//$("#dateto").html(getCurrentDate());
+	  
+}); 
+
+function getEvent(){ 
+	$.ajax({
+		url: "http://"+ajaxUrlPort+"/getEvent",
+		type: "GET",
+		dataType: 'json',
+		//data:{id:id},
+		contentType: "application/json; charset=utf-8",
+		success: function (data) {	
+			
+			console.log('getEvent:')
+			console.log(data)			
+			
+			//手動更新			
+			eventmanuallist = data['eventmanuallist'];
+			if(Object.keys(eventmanuallist).length > 0){
+				htmlData = ""
+				no = 1;
+				for(i in eventmanuallist){
+					id = eventmanuallist[i]['id']
+					country = eventmanuallist[i]['country']
+					city = eventmanuallist[i]['city']
+					eventname = eventmanuallist[i]['eventname']
+					SQE_ID = eventmanuallist[i]['SQE_ID'];
+					
+					if (SQE_ID == 0) checkStr = ''; else checkStr = "checked='checked'";
+					htmlData = htmlData+"<tr style='font-size:14px;' class='eventList' id='eventmanual"+id+"'>";
+					htmlData = htmlData+"<td><input type='checkbox' id='em"+id+"' "+checkStr+"/></td>";
+					htmlData = htmlData+"<th scope='row'>"+no+"</th>";
+					htmlData = htmlData+"<td>"+country+"</td>";
+					htmlData = htmlData+"<td>"+city+"</td>";
+					htmlData = htmlData+"<td>"+eventname+"</td>";
+					htmlData = htmlData+"<td><button type='button' class='btn btn-outline-danger btn-sm' style='width:50px;height:25px;margin-top:-3px;' onclick='eventDelete("+id+");'>刪除</button></td></tr>";			
+					no++;
+				}
+				$('#eventmanuallist').html(htmlData);
+				$('#eventmanual').show()
+			}			
+			 
+		},				
+		error: function(xhr) {
+		  alert('Ajax request 發生錯誤:'+JSON.stringify(xhr)); 
+		}
+	});			
+}
+
+function eventDelete(id){
+	if(confirm("確定要刪除嗎?")){
+		$.ajax({
+			url: "http://"+ajaxUrlPort+"/eventDelete",
+			type: "GET",
+			dataType: 'json',
+			data:{eventid:id},
+			contentType: "application/json; charset=utf-8",
+			success: function (data) {
+				console.log('eventDelete:')
+				console.log(data); 
+				if(data['result'] == 0) alert('刪除災害完成')
+				getEvent();
+			},				
+			error: function(xhr) {
+			  alert('Ajax request 發生錯誤:'+JSON.stringify(xhr)); 
+			}
+		});	
+	}
+}
+
+function getCurrentDate(){ 
+	var today = new Date();
+	var dd = String(today.getDate()).padStart(2, '0');
+	var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+	var yyyy = today.getFullYear(); 
+	today = yyyy+mm+dd; 
+	return today;
+}	 
+ 
+var eventtypeList='';
+var mainList='';
+var newsList='';
+var country_city_eventtype = '';
+
+function getDisaster(){ 
+	datefrom = 20201210;
+	dateto = getCurrentDate(); 
+	//alert(datefrom+' '+dateto)
+	$.ajax({
+		url: "http://"+ajaxUrlPort+"/getDisaster",
+		type: "GET",
+		dataType: 'json',
+		data:{datefrom:datefrom,dateto:dateto},
+		contentType: "application/json; charset=utf-8",
+		success: function (data) {	
+			eventtypeList = data['eventtypeList'];
+			mainList = data['mainList'];
+			newsList = data['newsList'];
+			htmlData = ''			
+			
+			for(i = 0 ; i < Object.keys(eventtypeList).length ; i++){
+				eventtype = eventtypeList[i]['eventtype'];
+				count = eventtypeList[i]['count'];				
+				htmlData = htmlData + '<button type="button" class="disaster btn btn-outline-danger" style="width:120px;height:33px; margin-top:3px;margin-left:;font-size:16px;" value="'+eventtype+'" id="disaster'+i+'">'+eventtype+'('+count+')</button>&nbsp;&nbsp;';
+				if((i+1)%4==0) htmlData = htmlData + '<br>'
+			} 
+			 
+			$('#disasterlist').html(htmlData);
+			
+			$(".disaster").click(function(){ 
+				$(".disaster").removeClass("btn-danger");
+				$(".disaster").addClass("btn-outline-danger");
+				$(this).removeClass("btn-outline-danger");
+				$(this).addClass("btn-danger");
+				eventtype = $(this).val();
+							
+				list = mainList[eventtype]
+				console.log('list:')
+				console.log(list)
+				htmlData = ''
+				for(i = 0 ; i < Object.keys(list).length ; i++){
+					country = list[i]['country'];
+					city = list[i]['city'];
+					count = list[i]['count'];
+					country_city_eventtype =  country+'-'+city+'-'+eventtype;
+					htmlData = htmlData+"<tr style='cursor: pointer;font-size:16px;' class='eventList' id='event"+i+"' onclick='getEventNews("+i+",\""+country_city_eventtype+"\")'>";
+					//htmlData = htmlData+"<td><button type='button' class='btn btn-outline-primary btn-sm' style='width:70px;height:25px;margin-top:-3px;' onclick='eventaddmanual(\""+country+"\",\""+city+"\",\""+eventtype+"\");'>加入🔼</button></td>";
+					htmlData = htmlData+"<th scope='row'>"+(i+1)+"</th>";
+					htmlData = htmlData+"<td>"+country+"</td>";
+					htmlData = htmlData+"<td>"+city+"</td>";
+					htmlData = htmlData+"<td>"+count+"</td></tr>";
+				}
+				$('#mainList').html(htmlData);
+				$('#event0').click();
+			});
+			
+			$('#disaster0').click();
+			
+		},				
+		error: function(xhr) {
+		  alert('Ajax request 發生錯誤:'+JSON.stringify(xhr)); 
+		}
+	});
+}  
+
+function getEventNews(i,country_city_eventtype){ 
+	$('.eventList').css('background-color', ''); 
+	$('#event'+i).css('background-color', '#F5DEB3');  
+	list = newsList[country_city_eventtype];
+	htmlData = ''
+	for(i = 0 ; i < Object.keys(list).length ; i++){
+		newsid = list[i]['newsid'];
+		publishdate = list[i]['publishdate'];
+		url = list[i]['url'];
+		title = list[i]['title'];
+		htmlData = htmlData+"<tr style='cursor: pointer;font-size:16px;' >";
+		htmlData = htmlData+"<th scope='row'>"+(i+1)+"</th>";
+		htmlData = htmlData+"<td><a href='"+url+"' target='_blank'>"+title+"</a></td>";
+		htmlData = htmlData+"<td>"+publishdate+"</td></tr>";		
+	}
+	$('#newslist').html(htmlData);
+}
+ 
+var pageList = {"事件地圖":"event","關鍵字訂閱":"subscribe","人事物關聯":"entity","天災預警":"disaster"};  
+function changeItem(id,text){
+	$('#'+id).html(text); 	
+	if(id == 'distribution') {
+		//redirectPage = window.location.origin+'/i-DAP/'+pageList[text]+'.htm';
+		redirectPage = window.location.pathname.replace(GetFilename(window.location.pathname),pageList[text]);	
+		window.location.href = redirectPage;
+	}	
+	search();	
+}   
+
+function checkCountryCity(){
+	country = $("#country").val().trim()
+	city = $("#city").val().trim() 
+	eventname = $("#eventname").val().trim()		
+	if(country == '' || city == '' || eventname== ''){
+		alert('國家,城市與災害名稱需要填寫!')
+	}else{
+		if(city.substr(city.length-1,1) == '市'){
+			city = city.substr(0,city.length-1)
+			alert("城市名稱結尾請省略'市'，改為:"+city);			
+		}
+		$.ajax({
+				url: "http://"+ajaxUrlPort+"/checkCountryCity",
+				type: "GET",
+				dataType: 'json',
+				data:{country:country,city:city},
+				contentType: "application/json; charset=utf-8",
+				success: function (data) {	
+					console.log('checkCountryCity:')
+					console.log(data); 
+					if(data['result'] == 0 && confirm("請確認["+data['address']+"]是您要新增的嗎?")) {					
+						eventaddmanual(country,city,eventname);
+					}else if(data['result'] == 1) {
+						alert("您輸入的國家:"+country+" 城市:"+city+"，地圖套件GeoPY找不到此地點!")
+					}
+				},				
+				error: function(xhr) {
+				  alert('Ajax insertPPMCADM 發生錯誤' ); 
+				}
+		});
+	}	
+}
+
+function eventaddmanual(country,city,eventname){  	 
+	$.ajax({
+		url: "http://"+ajaxUrlPort+"/eventaddmanual",
+		type: "GET",
+		dataType: 'json',
+		data:{country:country,city:city,eventname:eventname},
+		contentType: "application/json; charset=utf-8",
+		success: function (data) {	
+			console.log('eventadd:')
+			console.log(data); 
+			if(data['result'] == 0) {
+				alert('新增災害完成')
+				getEvent();
+			}			
+		},				
+		error: function(xhr) {
+		  alert('Ajax insertPPMCADM 發生錯誤' ); 
+		}
+	});
+}   
+
+function eventSubscribe(){ 
+	eventidlist_m = [];	
+	for(i = 0 ; i < Object.keys(eventmanuallist).length ; i++){
+		if($('#em'+eventmanuallist[i]['id']).is(':checked')){
+			eventidlist_m.push(eventmanuallist[i]['id']);			
+		} 		
+	}
+	
+	if(eventidlist_m.length == 0) message = '您選了0個事件，您確定要清空事件?';
+	else message = '您選了'+eventidlist_m.length+'個事件，您確定要更新事件?';
+	 
+	console.log('eventidlist_m:')
+	console.log(eventidlist_m.toString())
+		
+	if(confirm(message)){
+	
+		$.ajax({
+			url: "http://"+ajaxUrlPort+"/eventSubscribe",
+			type: "GET",
+			dataType: 'json',
+			data:{eventidlist:'',eventidlist_m:eventidlist_m.toString(),PERNR:PERNR,userChineseName:userChineseName},
+			contentType: "application/json; charset=utf-8",
+			success: function (data) {	
+				console.log('eventSubscribe:')
+				console.log(data); 
+				if(data['result'] == 0) alert('資料對接完成')
+			},				
+			error: function(xhr) {
+			  alert('Ajax insertPPMCADM 發生錯誤' ); 
+			}
+		});	
+	}
+}
+
+function getCurrentDate(){ 
+	var today = new Date();
+	var dd = String(today.getDate()).padStart(2, '0');
+	var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+	var yyyy = today.getFullYear(); 
+	today = yyyy+mm+dd; 
+	return today;
+}
+</script>
+   <section class="content-header">
+  <h1>
+    國際重大事件
+    <small>全球各地風災雨災等</small>
+  </h1>
+  <ol class="breadcrumb">
+    <!-- TODO -->
+    <li><a href="#"><i class="fa fa-dashboard"></i>首頁</a></li>
+    <li class="active">國際重大事件</li>
+  </ol>
+</section>
+
+    <section class="content">
+      <div class="row" >	 
+		<div class="col-md-6" style="max-width:700px;">
+          <div class="card mb-6" id="eventTitle" style="height: ;background-color:; margin-top:0px;overflow-x:hidden;">
+		     	  
+		    <div id="disasterlist" class="row" style="margin-left:0px;margin-top:10px;font-size:14px;">
+			</div>			 
+			
+			<table class="table table-sm" style="margin-top:20px;">
+			  <thead>
+				<tr>
+				   
+				  <th scope="col" class="col-md-1" style="">#</th> 
+				  <th scope="col" class="col-md-1" style="">國家</th>
+				  <th scope="col" class="col-md-1" style="">城市</th>
+				  <th scope="col" class="col-md-1" style="">新聞筆數</th> 
+				</tr>
+			  </thead>
+			  <tbody id="mainList"></tbody>
+			</table>
+          </div>
+        </div>		
+		
+		<div class="col-md-6" id="" style="background-color:;  ">
+		  <div class="card mb-6" id="map" style=" height:;background-color:; margin-top:0px; ">
+			<table class="table table-sm">
+			  <thead>
+				<tr>
+				  <th scope="col">#</th>
+				  <th scope="col" style="width:;">標題</th>
+				  <th scope="col" style="width:90px;">發表日期</th>
+				</tr>
+			  </thead>
+			  <tbody id="newslist">
+			  </tbody>
+			</table>
+		  </div>  
+		</div>
+      </div> 
+    </section>

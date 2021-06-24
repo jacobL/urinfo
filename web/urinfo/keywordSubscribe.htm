@@ -1,0 +1,662 @@
+ 
+<!-- Content Header (Page header) -->
+
+<script>     
+//var ajaxUrlPort = '127.0.0.1:85'; //桌機 python flask server; not apache http 
+var ajaxUrlPort = 'pc89600059495s:85'; //HPC idap均銘開發
+var ajaxUrlPort = '10.55.23.168:31081'; //HPC idap均銘開發
+var subscribe_list = '';
+
+function keyword_subscribe(language){
+	subscribeEditID = $('#subscribeEditID').val() //0表示新增，非0表示修改
+	
+	keyword = $('#subscribeKeyword_'+language).val().trim();
+	if(language == 'tw'){
+		keyword_tw = keyword
+	}else{
+		keyword_tw = $('#subscribeKeyword_'+language+'_zh-tw').val().trim();
+	}
+	PERNRList = $('#PERNRList_'+language).val().trim();
+	chatsnList = $('#chatsnList_'+language).val().trim();
+	
+	useraccount = $('#useraccount_'+language).val().trim();
+	apikey = $('#apikey_'+language).val().trim();
+	team_sn = $('#team_sn_'+language).val().trim();	 
+	
+	//alert('keyword:'+keyword+' keyword_tw:'+keyword_tw+' PERNR:'+PERNR+' userChineseName:'+userChineseName+' PERNRList:'+PERNRList+' , chatsnList:'+chatsnList)
+	console.log('keyword_subscribe keyword len:'+keyword.length+' PERNRList len:'+PERNRList.length+' , chatsnList len:'+chatsnList.length+' useraccount:'+useraccount+' useraccount.length:'+useraccount.length+' apikey:'+apikey+' apikey.length:'+apikey.length+' team_sn:'+team_sn+' team_sn.length:'+team_sn.length )
+	
+    // Mapp即時交談  Mapp個人  Mapp團隊互動  選其中之一輸入
+	if(keyword.length > 1 && (chatsnList.length >= 4 || PERNRList.length > 10 || (useraccount.length > 10 && apikey.length > 10 && team_sn.length > 3) )){
+		$.ajax({
+			url: "http://"+ajaxUrlPort+"/keyword_subscribe",
+			type: "GET",
+			dataType: 'json',
+			data:{keyword:keyword, keyword_tw:keyword_tw, language:language, PERNR:PERNR, userChineseName:userChineseName, PERNRList:PERNRList, chatsnList:chatsnList,subscribeEditID:subscribeEditID, useraccount:useraccount, apikey:apikey, team_sn:team_sn},
+			contentType: "application/json; charset=utf-8",
+			success: function (data) {
+				console.log('keyword_subscribe:')
+				console.log(data) 
+				result = data['result'];
+				if(result == 0) alert('訂閱成功!');
+				else if(result == 1) alert('訂閱失敗! 同一個(組)關鍵字不能重複訂閱');
+				init_keyword_subscribe(); 
+				
+			},				
+			error: function(xhr) {
+			  alert('keyword_subscribe 發生錯誤:'+JSON.stringify(xhr)); 
+			}
+		}); 
+	}else{
+		msg = '';
+		if(keyword.length <= 1) msg = '關鍵字長度:'+keyword.length+'，需大於1! '
+		if(chatsnList.length <= 3) msg = msg+' Mapp交談室的長度:'+chatsnList.length+'，需大於3! '
+		if(PERNRList.length <= 9) msg = msg+' Mapp個人的長度:'+PERNRList.length+'，需大於9! '
+		alert("請確認"+msg)
+	} 
+}
+
+//subscribe_table_tw
+//subscribe_list_tw
+function init_keyword_subscribe(){
+	get_keyword_subscribe()
+	$('#subscribeEditID').val(0)
+	$('.createSubscribe').show()
+	$('.editSubscribe').hide()
+	
+	$('.subscribeForm').val('')
+	/*
+	$('#subscribeKeyword_tw').val('')
+	$('#chatsnList_tw').val('')
+	$('#PERNRList_tw').val('')
+	$('#useraccount_tw').val('')
+	$('#apikey_tw').val('')
+	$('#team_sn_tw').val('') 
+	
+	$('#subscribeKeyword_ja').val('')
+	$('#subscribeKeyword_ja_zh-tw').val('')
+	$('#chatsnList_ja').val('')
+	$('#PERNRList_ja').val('')
+	$('#useraccount_ja').val('')
+	$('#apikey_ja').val('')
+	$('#team_sn_ja').val('') 
+	
+	$('#subscribeKeyword_ko').val('')
+	$('#subscribeKeyword_ko_zh-tw').val('')
+	$('#chatsnList_ko').val('')
+	$('#PERNRList_ko').val('')
+	$('#useraccount_ko').val('')
+	$('#apikey_ko').val('')
+	$('#team_sn_ko').val('') 
+	
+	$('#subscribeKeyword_en').val('')
+	$('#subscribeKeyword_en_zh-tw').val('')
+	$('#chatsnList_en').val('')
+	$('#PERNRList_en').val('')
+	$('#useraccount_en').val('')
+	$('#apikey_en').val('')
+	$('#team_sn_en').val('')
+	*/
+}
+function get_keyword_subscribe(){ 
+	
+	$.ajax({
+		url: "http://"+ajaxUrlPort+"/get_keyword_subscribe",
+		type: "GET",
+		dataType: 'json',
+		data:{PERNR:PERNR},
+		contentType: "application/json; charset=utf-8",
+		success: function (data) {
+			console.log('get_keyword_subscribe:')
+			console.log(data) 
+			subscribe_list = data['subscribe_list']; 
+			if(subscribe_list != 0){ 
+				htmlData_tw = ""
+				htmlData_ja = ""
+				htmlData_ko = ""
+				htmlData_en = ""
+				no_tw = 1;
+				no_ja = 1;
+				no_ko = 1;
+				no_en = 1;
+				
+				for(i in subscribe_list){
+					id = subscribe_list[i]['id']
+					keyword = subscribe_list[i]['keyword']
+					keyword_tw = subscribe_list[i]['keyword_tw']
+					language = subscribe_list[i]['language'] 
+					PERNRList = !subscribe_list[i]['PERNRList'] ? '' : subscribe_list[i]['PERNRList'];
+					chatsnList = subscribe_list[i]['chatsnList']
+					useraccount = !subscribe_list[i]['useraccount'] ? '' : subscribe_list[i]['useraccount'];
+					apikey = !subscribe_list[i]['apikey'] ? '' : subscribe_list[i]['apikey'];
+					team_sn = !subscribe_list[i]['team_sn'] ? '' : subscribe_list[i]['team_sn'];
+					creationdate = subscribe_list[i]['creationdate']  
+					if(language == 'tw'){
+						htmlData_tw = htmlData_tw+"<tr style='font-size:14px;'><td>"+no_tw+"</td>";
+						htmlData_tw = htmlData_tw+"<td><button type='button' class='btn btn-info btn-xs' style='width:50px;  ' onclick='editSubscribe("+id+");'>編輯</button>&nbsp;&nbsp;&nbsp;<button type='button' class='btn btn-primary btn-xs' style='width:50px; ' onclick='deleteSubscribe("+id+",\""+keyword+"\");'>刪除</button></td>";
+						htmlData_tw = htmlData_tw+"<td>"+keyword+"</td>";
+						htmlData_tw = htmlData_tw+"<td>"+chatsnList+"</td>";
+						htmlData_tw = htmlData_tw+"<td>"+PERNRList+"</td>";
+						htmlData_tw = htmlData_tw+"<td>"+team_sn+"</td>";
+						htmlData_tw = htmlData_tw+"<td>"+useraccount+"</td>";
+						htmlData_tw = htmlData_tw+"<td>"+apikey+"</td>";						
+						htmlData_tw = htmlData_tw+"<td>"+creationdate+"</td></tr>";
+						no_tw++;
+					}else if(language == 'ja'){ 
+						htmlData_ja = htmlData_ja+"<tr style='font-size:14px;'><td>"+no_ja+"</td>";
+						htmlData_ja = htmlData_ja+"<td><button type='button' class='btn btn-info btn-xs' style='width:50px;  ' onclick='editSubscribe("+id+");'>編輯</button>&nbsp;&nbsp;&nbsp;<button type='button' class='btn btn-primary btn-xs' style='width:50px; ' onclick='deleteSubscribe("+id+",\""+keyword+"\");'>刪除</button></td>";
+						htmlData_ja = htmlData_ja+"<td>"+keyword+"</td>";
+						htmlData_ja = htmlData_ja+"<td>"+keyword_tw+"</td>";
+						htmlData_ja = htmlData_ja+"<td>"+chatsnList+"</td>";
+						htmlData_ja = htmlData_ja+"<td>"+PERNRList+"</td>";
+						htmlData_ja = htmlData_ja+"<td>"+team_sn+"</td>";
+						htmlData_ja = htmlData_ja+"<td>"+useraccount+"</td>";
+						htmlData_ja = htmlData_ja+"<td>"+apikey+"</td>";						
+						htmlData_ja = htmlData_ja+"<td>"+creationdate+"</td></tr>";
+						no_ja++;					
+					}else if(language == 'ko'){
+						htmlData_ko = htmlData_ko+"<tr style='font-size:14px;'><td>"+no_ja+"</td>";
+						htmlData_ko = htmlData_ko+"<td><button type='button' class='btn btn-info btn-xs' style='width:50px;  ' onclick='editSubscribe("+id+");'>編輯</button>&nbsp;&nbsp;&nbsp;<button type='button' class='btn btn-primary btn-xs' style='width:50px; ' onclick='deleteSubscribe("+id+",\""+keyword+"\");'>刪除</button></td>";
+						htmlData_ko = htmlData_ko+"<td>"+keyword+"</td>";
+						htmlData_ko = htmlData_ko+"<td>"+keyword_tw+"</td>";
+						htmlData_ko = htmlData_ko+"<td>"+chatsnList+"</td>";
+						htmlData_ko = htmlData_ko+"<td>"+PERNRList+"</td>";
+						htmlData_ko = htmlData_ko+"<td>"+team_sn+"</td>";
+						htmlData_ko = htmlData_ko+"<td>"+useraccount+"</td>";
+						htmlData_ko = htmlData_ko+"<td>"+apikey+"</td>";						
+						htmlData_ko = htmlData_ko+"<td>"+creationdate+"</td></tr>";
+						no_ko++;
+					}else if(language == 'en'){
+						htmlData_en = htmlData_en+"<tr style='font-size:14px;'><td>"+no_en+"</td>";
+						htmlData_en = htmlData_en+"<td><button type='button' class='btn btn-info btn-xs' style='width:50px;  ' onclick='editSubscribe("+id+");'>編輯</button>&nbsp;&nbsp;&nbsp;<button type='button' class='btn btn-primary btn-xs' style='width:50px; ' onclick='deleteSubscribe("+id+",\""+keyword+"\");'>刪除</button></td>";
+						htmlData_en = htmlData_en+"<td>"+keyword+"</td>";
+						htmlData_en = htmlData_en+"<td>"+keyword_tw+"</td>";
+						htmlData_en = htmlData_en+"<td>"+chatsnList+"</td>";
+						htmlData_en = htmlData_en+"<td>"+PERNRList+"</td>";
+						htmlData_en = htmlData_en+"<td>"+useraccount+"</td>";
+						htmlData_en = htmlData_en+"<td>"+apikey+"</td>";
+						htmlData_en = htmlData_en+"<td>"+team_sn+"</td>";
+						htmlData_en = htmlData_en+"<td>"+creationdate+"</td></tr>";
+						no_en++;
+					}
+					
+					if(no_tw > 1){
+						$('#subscribe_list_tw').html(htmlData_tw);
+						$('#subscribe_table_tw').show();
+					}
+					if(no_ja > 1){ 
+						$('#subscribe_list_ja').html(htmlData_ja);
+						$('#subscribe_table_ja').show();
+					}
+					if(no_ko > 1){
+						$('#subscribe_list_ko').html(htmlData_ko);
+						$('#subscribe_table_ko').show();
+					}
+					if(no_en > 1){
+						$('#subscribe_list_en').html(htmlData_en);
+						$('#subscribe_table_en').show();
+					}
+				}
+			} 
+		},				
+		error: function(xhr) {
+		  alert('get_keyword_subscribe 發生錯誤:'+JSON.stringify(xhr)); 
+		}
+	}); 
+}
+
+function deleteSubscribe(id,keyword){	
+	if(confirm('你確定要刪除"'+keyword+'"的訂閱嗎？')){
+		$.ajax({
+			url: "http://"+ajaxUrlPort+"/deleteSubscribe",
+			type: "GET",
+			dataType: 'json',
+			data:{id:id},
+			contentType: "application/json; charset=utf-8",
+			success: function (data) {
+				if(data['result'] == 0){
+					alert('刪除成功')
+					init_keyword_subscribe();
+				}
+			},				
+			error: function(xhr) {
+			  alert('Ajax realtime_translate 發生錯誤:'+JSON.stringify(xhr)); 
+			}
+		});	
+	}
+}
+
+function editSubscribe(id){
+	$('#subscribeEditID').val(id)
+
+	for(i in subscribe_list){
+		if(subscribe_list[i]['id'] == id){
+			keyword = subscribe_list[i]['keyword']
+			keyword_tw = subscribe_list[i]['keyword_tw']
+			PERNRList = subscribe_list[i]['PERNRList']
+			chatsnList = subscribe_list[i]['chatsnList']
+			language = subscribe_list[i]['language']
+			apikey = subscribe_list[i]['apikey']
+			team_sn = subscribe_list[i]['team_sn']
+			useraccount = subscribe_list[i]['useraccount']
+			$('#subscribe_table_'+language).hide();
+			if(language != 'tw'){//ja,ko,en	
+				$('#subscribeKeyword_'+language+'_zh-tw').val(keyword_tw)
+			}
+			$('#subscribeKeyword_'+language).val(keyword)
+			$('#chatsnList_'+language).val(chatsnList)
+			$('#PERNRList_'+language).val(PERNRList)
+			
+			$('#apikey_'+language).val(apikey)
+			$('#team_sn_'+language).val(team_sn)
+			$('#useraccount_'+language).val(useraccount)
+			
+			//alert('keyword:'+keyword+' keyword_tw:'+keyword_tw+' PERNRList:'+PERNRList+' chatsnList:'+chatsnList+' language:'+language)
+			
+		}
+	}
+	
+	$('.createSubscribe').hide()
+	//$('.editSubscribe').show()
+	if(language=='')
+	$('#editSubscribe_').show()
+	
+	switch (language) {
+	  case 'tw':
+		$('#editSubscribe_tw1').show();
+		$('#editSubscribe_tw2').show();
+		break;
+	  case 'ja':
+	    $('#editSubscribe_ja1').show();
+		$('#editSubscribe_ja2').show();
+		break;
+	  case 'ko':
+		$('#editSubscribe_ko1').show();
+		$('#editSubscribe_ko2').show();
+		break;
+	  case 'en':
+		$('#editSubscribe_en1').show();
+		$('#editSubscribe_en2').show();
+		break;	
+	  default:
+		//console.log(`Sorry, we are out of ${expr}.`);
+	}
+}
+
+function realtime_translate(keyword,lang_src,lang_tgt){ 
+	keyword = keyword.trimStart().trimEnd()
+	if(keyword.length > 1){
+		$.ajax({
+			url: "http://"+ajaxUrlPort+"/realtime_translate",
+			type: "GET",
+			dataType: 'json',
+			data:{keyword:keyword, lang_src:lang_src, lang_tgt:lang_tgt},
+			contentType: "application/json; charset=utf-8",
+			success: function (data) {
+				result = data['result']
+				console.log('realtime_translate:'+result)
+				//alert(result)
+				if(lang_tgt == 'zh-tw'){ //_jp_zh-tw
+					$('#subscribeKeyword_'+lang_src+'_'+lang_tgt).val(result);
+				}else{ //_zh-tw
+					$('#subscribeKeyword_'+lang_tgt).val(result);
+				}		
+			},				
+			error: function(xhr) {
+			  alert('Ajax realtime_translate 發生錯誤:'+JSON.stringify(xhr)); 
+			}
+		});	
+	}
+}
+
+function exit_subscribe(){
+	init_keyword_subscribe()
+}
+
+$(document).ready(function(){ 
+	get_keyword_subscribe(); 
+});	
+</script>
+<section class="content-header">
+  <h1>
+    即時Mapp警報
+    <small>近期出現關鍵字的新聞</small>
+  </h1>
+  <ol class="breadcrumb">
+    <li><a href="#"><i class="fa fa-dashboard"></i>首頁</a></li>
+    <li class="active">即時Mapp警報</li>
+  </ol>
+</section>
+
+<input id="subscribeEditID" style="display:none;" value='0'>
+
+<section class="content">
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="box">
+        <div class="box-header">
+          <!--3 class="box-title">使用+代表(AND)交集與空格代表(OR)聯集</h3-->
+        </div>
+        <div class="box-body">
+		<div class="nav-tabs-custom">
+		<ul class="nav nav-tabs pull-right">		   
+		  <li><a href="#tab_1-4" data-toggle="tab">英語網站</a></li>
+		  <li><a href="#tab_1-3" data-toggle="tab">韓國網站</a></li>
+		  <li><a href="#tab_1-2" data-toggle="tab">日本網站</a></li>		  
+		  <li class="active"><a href="#tab_1-1" data-toggle="tab">中文網站</a></li>
+		  <li class="pull-left header"><i class="fa fa-bell-o"></i>中.日.韓 新聞訂閱</li>
+		</ul>
+		<div class="tab-content">
+		  <div class="tab-pane active" id="tab_1-1">
+			<span class="form-horizontal">
+              <div class="box-body">
+                <div class="form-group">
+                  <label for="subscribeKeyword_tw" class="col-sm-2 control-label">✽繁(簡)中關鍵字</label>
+                  <div class="col-sm-10">
+                    <input type="" class="form-control subscribeForm" id="subscribeKeyword_tw" placeholder="繁(簡)中關鍵字">
+					<span class="help-block">可用布林運算，AND（+）、OR（|）、NOT（-）。ex: 監控"台灣康寧"所發生的災害事件，但不要"尾牙"相關新聞，設定如下 : </span>
+					<span class="help-block"> 台灣康寧+火災|火警|濃煙|爆炸|停產|停機|停工|駭客入侵|駭客攻擊|電腦病毒|網路攻擊-尾牙</span>
+                  </div>			  
+                </div>
+				<div class="form-group">
+                  <label for="chatsnList_tw" class="col-sm-2 control-label">Mapp即時交談</label>
+                  <div class="col-sm-10">
+                    <input type="" class="form-control subscribeForm" id="chatsnList_tw" placeholder="交談室編號">
+					<span class="help-block">ex: 67731，多組用半形逗號,隔開，ex: 67731,3456,34421,5566</span>
+					<span class="help-block">交談室要收到推播，該交談室必須先加上機器人帳號:&nbsp;&nbsp;API_SmartPush</span>
+                  </div>				   
+				</div>
+				<div class="form-group">
+                  <label for="PERNRList_tw" class="col-sm-2 control-label">Mapp個人</label>
+                  <div class="col-sm-10">
+                    <input type="" class="form-control subscribeForm" id="PERNRList_tw" placeholder="工號加姓名">
+					<span class="help-block">ex: 18017220梁均銘，多組用半形逗號,隔開，ex: 18017220梁均銘,18017220梁均銘,18017220梁均銘</span>
+                  </div>
+				</div>
+				<div class="form-group">
+                  <label for="PERNRList_tw" class="col-sm-2 control-label">Mapp團隊互動<br><a class="example-image-link" href="assets/img/Mapp團隊互動說明.png" data-lightbox="example-1" data-title="Mapp團隊互動說明">設定說明</a>
+				<!--img src="../img/idea-icon.png" style="width:34px;cursor: pointer;margin-left:50px;" class="rounded-circle user_img_msg" id="idea"-->
+			      </label>
+                  <div class="row">
+					<div class="col-xs-2">團隊編號
+					  <input type="text" class="form-control subscribeForm" id="team_sn_tw" placeholder="ex : 4538">
+					</div>
+					<div class="col-xs-3">帳號
+					  <input type="text" class="form-control subscribeForm" id="useraccount_tw" placeholder="ex : va_1f28300870404a5ea8">
+					</div>
+					<div class="col-xs-4">API_Key
+					  <input type="text" class="form-control subscribeForm" id="apikey_tw" placeholder="ex : c4461d83-3170-4545-a27a-7fcd697f8920">
+					</div>
+				  </div>			  
+				</div>
+              </div>
+              <div class="box-footer"> 
+                <button type="" onclick="keyword_subscribe('tw');" id="createSubscribe_tw" class="btn btn-info pull-left createSubscribe">訂閱</button>
+				<button type="" onclick="keyword_subscribe('tw');" id="editSubscribe_tw1" class="btn btn-danger pull-left editSubscribe" style="display:none;">儲存修改</button>&nbsp;&nbsp;&nbsp;&nbsp; 
+				<button type="" onclick="init_keyword_subscribe();" id="editSubscribe_tw2" class="btn btn-success pull editSubscribe" style="display:none;">不修改</button>
+              </div>
+            </span>
+            <table id="subscribe_table_tw" class="table table-bordered table-hover" style="display:none;">
+              <thead>
+                <tr> 
+                  <th>no</th>
+				  <th style="width:160px;">執行</th>
+                  <th>繁(簡)中關鍵字</th>
+				  <th>Mapp交談室</th>
+				  <th>Mapp個人</th>
+				  <th>團隊編號</th>
+				  <th>帳號</th>
+				  <th>API_Key</th>
+                  <th>建立日期</th>				  
+                </tr>
+              </thead>
+              <tbody id="subscribe_list_tw">              
+              </tbody> 
+            </table>
+		  </div> 
+		  
+		  <div class="tab-pane" id="tab_1-2">
+		    <span class="form-horizontal">
+              <div class="box-body">
+			    <div class="form-group">
+                  <label for="subscribeKeyword_ja" class="col-sm-2 control-label">✽日文關鍵字</label>
+                  <div class="col-sm-10">
+                    <input type="" class="form-control subscribeForm" id="subscribeKeyword_ja" placeholder="日文關鍵字" onchange="realtime_translate(this.value,'ja','zh-tw')">
+                  </div>			  
+                </div>
+                <div class="form-group">
+                  <label for="subscribeKeyword_ja_zh-tw" class="col-sm-2 control-label">✽繁中關鍵字</label>
+                  <div class="col-sm-10">
+                    <input type="" class="form-control subscribeForm" id="subscribeKeyword_ja_zh-tw" placeholder="繁中關鍵字" onchange="realtime_translate(this.value,'zh-tw','ja')">
+					<span class="help-block">可用布林運算，AND（+）、OR（|）、NOT（-）。ex: 監控"台灣康寧"所發生的災害事件，但不要"尾牙"相關新聞，設定如下 : </span>
+					<span class="help-block"> 台灣康寧+火災|火警|濃煙|爆炸|停產|停機|停工|駭客入侵|駭客攻擊|電腦病毒|網路攻擊-尾牙</span>
+                  </div>			  
+                </div>
+				<div class="form-group">
+                  <label for="chatsnList_ja" class="col-sm-2 control-label">Mapp即時交談</label>
+                  <div class="col-sm-10">
+                    <input type="" class="form-control subscribeForm" id="chatsnList_ja" placeholder="交談室編號">
+					<span class="help-block">ex: 67731，多組用半形逗號,隔開，ex: 67731,3456,34421,5566</span>
+					<span class="help-block">交談室要收到推播，該交談室必須先加上機器人帳號:&nbsp;&nbsp;API_SmartPush</span>
+                  </div>				   
+				</div>
+				<div class="form-group">
+                  <label for="PERNRList_ja" class="col-sm-2 control-label">Mapp個人</label>
+                  <div class="col-sm-10">
+                    <input type="" class="form-control subscribeForm" id="PERNRList_ja" placeholder="工號加姓名">
+					<span class="help-block">ex: 18017220梁均銘，多組用半形逗號,隔開，ex: 18017220梁均銘,18017220梁均銘,18017220梁均銘</span>
+                  </div>
+				</div>
+				<div class="form-group">
+                  <label for="PERNRList_ja" class="col-sm-2 control-label">Mapp團隊互動<br><a class="example-image-link" href="assets/img/Mapp團隊互動說明.png" data-lightbox="example-1" data-title="Mapp團隊互動說明">設定說明</a>
+			      </label>
+                  <div class="row">
+					<div class="col-xs-2">團隊編號
+					  <input type="text" class="form-control subscribeForm" id="team_sn_ja" placeholder="ex : 4538">
+					</div>
+					<div class="col-xs-3">帳號
+					  <input type="text" class="form-control subscribeForm" id="useraccount_ja" placeholder="ex : va_1f28300870404a5ea8">
+					</div>
+					<div class="col-xs-4">API_Key
+					  <input type="text" class="form-control subscribeForm" id="apikey_ja" placeholder="ex : c4461d83-3170-4545-a27a-7fcd697f8920">
+					</div>
+				  </div>			  
+				</div>
+              </div>
+              <div class="box-footer"> 
+                <button type="" onclick="keyword_subscribe('ja');" id="createSubscribe_ja" class="btn btn-info pull-left createSubscribe">訂閱</button>
+				<button type="" onclick="keyword_subscribe('ja');" id="editSubscribe_ja1" class="btn btn-danger pull-left editSubscribe" style="display:none;">儲存修改</button>&nbsp;&nbsp;&nbsp;&nbsp; 
+				<button type="" onclick="init_keyword_subscribe();" id="editSubscribe_ja2" class="btn btn-success pull editSubscribe" style="display:none;">不修改</button>
+              </div>
+            </span>
+            <table id="subscribe_table_ja" class="table table-bordered table-hover" style="display:none;">
+              <thead>
+                <tr> 
+                  <th>no</th>
+				  <th style="width:160px;">執行</th>
+                  <th>日文關鍵字</th>
+				  <th>繁中關鍵字</th>
+				  <th>Mapp交談室</th>
+				  <th>Mapp個人</th>
+				  <th>團隊編號</th>
+				  <th>帳號</th>
+				  <th>API_Key</th>
+                  <th>建立日期</th>    
+                </tr>
+              </thead>
+              <tbody id="subscribe_list_ja">
+              </tbody> 
+            </table>
+		  </div>
+		  
+		  <div class="tab-pane" id="tab_1-3">
+		    <span class="form-horizontal">
+              <div class="box-body">
+			    <div class="form-group">
+                  <label for="subscribeKeyword_ko" class="col-sm-2 control-label">✽韓文關鍵字</label>
+                  <div class="col-sm-10">
+                    <input type="" class="form-control subscribeForm" id="subscribeKeyword_ko" placeholder="韓文關鍵字" onchange="realtime_translate(this.value,'ko','zh-tw')">
+                  </div>			  
+                </div>
+                <div class="form-group">
+                  <label for="subscribeKeyword_ko_zh-tw" class="col-sm-2 control-label">✽繁中關鍵字</label>
+                  <div class="col-sm-10">
+                    <input type="" class="form-control subscribeForm" id="subscribeKeyword_ko_zh-tw" placeholder="繁中關鍵字" onchange="realtime_translate(this.value,'zh-tw','ko')">
+					<span class="help-block">可用布林運算，AND（+）、OR（|）、NOT（-）。ex: 監控"台灣康寧"所發生的災害事件，但不要"尾牙"相關新聞，設定如下 : </span>
+					<span class="help-block"> 台灣康寧+火災|火警|濃煙|爆炸|停產|停機|停工|駭客入侵|駭客攻擊|電腦病毒|網路攻擊-尾牙</span>
+                  </div>			  
+                </div>
+				<div class="form-group">
+                  <label for="chatsnList_ko" class="col-sm-2 control-label">Mapp即時交談</label>
+                  <div class="col-sm-10">
+                    <input type="" class="form-control subscribeForm" id="chatsnList_ko" placeholder="交談室編號">
+					<span class="help-block">ex: 67731，多組用半形逗號,隔開，ex: 67731,3456,34421,5566</span>
+					<span class="help-block">交談室要收到推播，該交談室必須先加上機器人帳號:&nbsp;&nbsp;API_SmartPush</span>
+                  </div>				   
+				</div>
+				<div class="form-group">
+                  <label for="PERNRList_ko" class="col-sm-2 control-label">Mapp個人</label>
+                  <div class="col-sm-10">
+                    <input type="" class="form-control subscribeForm" id="PERNRList_ko" placeholder="工號加姓名">
+					<span class="help-block">ex: 18017220梁均銘，多組用半形逗號,隔開，ex: 18017220梁均銘,18017220梁均銘,18017220梁均銘</span>
+                  </div>
+				</div>
+				<div class="form-group">
+                  <label for="PERNRList_ko" class="col-sm-2 control-label">Mapp團隊互動<br><a class="example-image-link" href="assets/img/Mapp團隊互動說明.png" data-lightbox="example-1" data-title="Mapp團隊互動說明">設定說明</a>
+				<!--img src="../img/idea-icon.png" style="width:34px;cursor: pointer;margin-left:50px;" class="rounded-circle user_img_msg" id="idea"-->
+			      </label>
+                  <div class="row">
+					<div class="col-xs-2">團隊編號
+					  <input type="text" class="form-control subscribeForm" id="team_sn_ko" placeholder="ex : 4538">
+					</div>
+					<div class="col-xs-3">帳號
+					  <input type="text" class="form-control subscribeForm" id="useraccount_ko" placeholder="ex : va_1f28300870404a5ea8">
+					</div>
+					<div class="col-xs-4">API_Key
+					  <input type="text" class="form-control subscribeForm" id="apikey_ko" placeholder="ex : c4461d83-3170-4545-a27a-7fcd697f8920">
+					</div>
+				  </div>			  
+				</div>				
+              </div>
+              <div class="box-footer"> 
+                <button type="" onclick="keyword_subscribe('ko');" id="createSubscribe_ko" class="btn btn-info pull-left createSubscribe">訂閱</button>
+				<button type="" onclick="keyword_subscribe('ko');" id="editSubscribe_ko1" class="btn btn-danger pull-left editSubscribe" style="display:none;">儲存修改</button>&nbsp;&nbsp;&nbsp;&nbsp; 
+				<button type="" onclick="init_keyword_subscribe();" id="editSubscribe_ko2" class="btn btn-success pull editSubscribe" style="display:none;">不修改</button>
+              </div>
+            </span>
+            <table id="subscribe_table_ko" class="table table-bordered table-hover" style="display:none;">
+              <thead>
+                <tr> 
+                  <th>no</th>
+				  <th style="width:160px;">執行</th>
+                  <th>韓文關鍵字</th>
+				  <th>繁中關鍵字</th>
+				  <th>Mapp交談室</th>
+				  <th>Mapp個人</th>
+				  <th>團隊編號</th>
+				  <th>帳號</th>
+				  <th>API_Key</th>
+                  <th>建立日期</th>    
+                </tr>
+              </thead>
+              <tbody id="subscribe_list_ko">
+              </tbody> 
+            </table>
+		  </div>
+		  
+		  <div class="tab-pane" id="tab_1-4">
+		    <span class="form-horizontal">
+              <div class="box-body">
+			    <div class="form-group">
+                  <label for="subscribeKeyword_en" class="col-sm-2 control-label">✽英文關鍵字</label>
+                  <div class="col-sm-10">
+                    <input type="" class="form-control" id="subscribeKeyword_en" placeholder="英文關鍵字" onchange="realtime_translate(this.value,'en','zh-tw')">
+                  </div>			  
+                </div>
+                <div class="form-group">
+                  <label for="subscribeKeyword_en_zh-tw" class="col-sm-2 control-label">✽繁中關鍵字</label>
+                  <div class="col-sm-10">
+                    <input type="" class="form-control" id="subscribeKeyword_en_zh-tw" placeholder="繁中關鍵字" onchange="realtime_translate(this.value,'zh-tw','en')">
+					<span class="help-block">可用布林運算，AND（+）、OR（|）、NOT（-）。ex: 監控"台灣康寧"所發生的災害事件，但不要"尾牙"相關新聞，設定如下 : </span>
+					<span class="help-block"> 台灣康寧+火災|火警|濃煙|爆炸|停產|停機|停工|駭客入侵|駭客攻擊|電腦病毒|網路攻擊-尾牙</span>
+                  </div>			  
+                </div>
+				<div class="form-group">
+                  <label for="chatsnList_en" class="col-sm-2 control-label">Mapp交談室</label>
+                  <div class="col-sm-10">
+                    <input type="" class="form-control" id="chatsnList_en" placeholder="交談室編號">
+					<span class="help-block">ex: 67731，多組用半形逗號,隔開，ex: 67731,3456,34421,5566</span>
+					<span class="help-block">交談室要收到推播，該交談室必須先加上機器人帳號:&nbsp;&nbsp;API_SmartPush</span>
+                  </div>				   
+				</div>
+				<div class="form-group">
+                  <label for="PERNRList_en" class="col-sm-2 control-label">Mapp個人</label>
+                  <div class="col-sm-10">
+                    <input type="" class="form-control" id="PERNRList_en" placeholder="工號加姓名">
+					<span class="help-block">ex: 18017220梁均銘，多組用半形逗號,隔開，ex: 18017220梁均銘,18017220梁均銘,18017220梁均銘</span>
+                  </div>
+				</div>
+				<div class="form-group">
+                  <label for="PERNRList_en" class="col-sm-2 control-label">Mapp團隊互動<br><a class="example-image-link" href="assets/img/Mapp團隊互動說明.png" data-lightbox="example-1" data-title="Mapp團隊互動說明">設定說明</a>
+			      </label>
+                  <div class="row">
+					<div class="col-xs-2">團隊編號
+					  <input type="text" class="form-control subscribeForm" id="team_sn_en" placeholder="ex : 4538">
+					</div>
+					<div class="col-xs-3">帳號
+					  <input type="text" class="form-control subscribeForm" id="useraccount_en" placeholder="ex : va_1f28300870404a5ea8">
+					</div>
+					<div class="col-xs-4">API_Key
+					  <input type="text" class="form-control subscribeForm" id="apikey_en" placeholder="ex : c4461d83-3170-4545-a27a-7fcd697f8920">
+					</div>
+				  </div>			  
+				</div>
+              </div>
+              <div class="box-footer"> 
+                <button type="" onclick="keyword_subscribe('en');" id="createSubscribe_en" class="btn btn-info pull-left createSubscribe">訂閱</button>
+				<button type="" onclick="keyword_subscribe('en');" id="editSubscribe_en1" class="btn btn-danger pull-left editSubscribe" style="display:none;">儲存修改</button>&nbsp;&nbsp;&nbsp;&nbsp; 
+				<button type="" onclick="init_keyword_subscribe();" id="editSubscribe_en2" class="btn btn-success pull editSubscribe" style="display:none;">不修改</button>
+              </div>
+            </span>
+            <table id="subscribe_table_en" class="table table-bordered table-hover" style="display:none;">
+              <thead>
+                <tr> 
+                  <th>no</th>
+				  <th style="width:160px;">執行</th>
+                  <th>英文關鍵字</th>
+				  <th>繁中關鍵字</th>
+				  <th>Mapp交談室</th>
+				  <th>Mapp個人</th>
+				  <th>團隊編號</th>
+				  <th>帳號</th>
+				  <th>API_Key</th>
+                  <th>建立日期</th>    
+                </tr>
+              </thead>
+              <tbody id="subscribe_list_en">
+              </tbody> 
+            </table>
+		  </div>
+		  
+		</div>
+	  </div>
+	
+		
+		
+		
+		  
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row"> 
+	 
+  </div> 
+  
+   
+  
+  
+ 
+ 
+</section> 

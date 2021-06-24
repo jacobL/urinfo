@@ -1,0 +1,272 @@
+ 
+<!-- Content Header (Page header) -->
+
+<script>     
+//var ajaxUrlPort = '127.0.0.1:85'; //桌機 python flask server; not apache http 
+var ajaxUrlPort = '10.55.23.168:34082'; //HPC idap均銘開發
+var wd_list = '';
+
+
+function getWDList(){ 
+	$('#wdEditID').val(0)
+	$('.wdForm').val('')
+	
+	$.ajax({
+		url: "http://"+ajaxUrlPort+"/getWDList",
+		type: "GET",
+		dataType: 'json',
+		//data:{PERNR:PERNR},
+		contentType: "application/json; charset=utf-8",
+		success: function (data) {
+		  //result = data['result']
+		  console.log('getWDList:')
+		  console.log(data)
+		  wd_list = data['wd_list']
+		  
+		  htmlData = ""
+		  //no,服務說明,聯絡人,聯絡Mapp群,url,回報頻率,狀態
+		  no=1
+		  for(i in wd_list){
+		     
+			id = wd_list[i]['id']
+		    service = wd_list[i]['service']
+			PERNRList = wd_list[i]['PERNRList']
+            chatsnList = wd_list[i]['chatsnList'] === null ? '' : wd_list[i]['chatsnList'];			
+            url = wd_list[i]['url']
+            frequency = wd_list[i]['frequency'] 
+            status = wd_list[i]['status'] === 0 ? '啟用' : '停用'
+			updatetime = wd_list[i]['updatetime'] 
+			htmlData = htmlData+"<tr style='font-size:12px;'><td>"+no+"</td>";	
+			htmlData = htmlData+"<td style='width:60px;'>"+
+			"<button type='button' class='btn btn-block btn-primary btn-xs' onclick='editWD("+id+")'>編輯</button>"+
+			"<button type='button' class='btn btn-block btn-danger btn-xs' onclick='deleteWD("+id+",\""+service+"\")'>刪除</button></td>";
+			htmlData = htmlData+"<td style='width:140px;'>"+service+"</td>";
+			htmlData = htmlData+"<td style='width:120px;'>"+PERNRList+"</td>";
+			htmlData = htmlData+"<td style='width:85px;'>"+chatsnList+"</td>";
+			htmlData = htmlData+"<td style='max-width:300px;'><a  href='"+url+"' target='_blank'>"+url+"</a></td>";
+			htmlData = htmlData+"<td style='width:65px;'>"+frequency+"</td>"; 
+			htmlData = htmlData+"<td style='width:40px;'>"+status+"</td>";
+			htmlData = htmlData+"<td style='width:118px;'>"+updatetime+"</td></tr>";
+			
+			no++;
+		  }
+		  $('#wd_list').html(htmlData);
+		},				
+		error: function(xhr) {
+		  alert('getWDList 發生錯誤:'+JSON.stringify(xhr)); 
+		}
+	}); 
+	
+	$('.createWD').show()
+	$('.editWD').hide()
+}
+
+  
+function createWD(){ 
+	wdEditID = $('#wdEditID').val() //0表示新增，非0表示修改
+	
+	service = $('#service').val().trim();
+	PERNRList = $('#PERNRList').val().trim();
+	chatsnList = $('#chatsnList').val().trim();
+	url = $('#url').val().trim();
+	frequency = $('#frequency').html().trim();
+	status = $('#status').html().trim() === '啟用' ? 0 : 1;
+	console.log('wdEditID:'+wdEditID+' , PERNR:'+PERNR+' , service:'+service+' , PERNRList:'+PERNRList+' , chatsnList:'+chatsnList+' , url:'+url+' , frequency:'+frequency+' , status:'+status)
+    
+	$.ajax({
+		url: "http://"+ajaxUrlPort+"/createWD",
+		type: "GET",
+		dataType: 'json',
+		data:{wdEditID:wdEditID,PERNR:PERNR,service:service,PERNRList:PERNRList,chatsnList:chatsnList,url:url,frequency:frequency,status:status},
+		contentType: "application/json; charset=utf-8",
+		success: function (data) {
+		  result = data['result']
+		  
+		  console.log('createWD result:')
+		  console.log(result)
+		  
+		  if(result == 0){
+		    if(wdEditID == 0)
+				alert('新增成功')
+			else alert('修改成功')	
+			getWDList()
+		  }
+		},				
+		error: function(xhr) {
+		  alert('createWD 發生錯誤:'+JSON.stringify(xhr)); 
+		}
+	}); 
+}
+
+function deleteWD(id,service){	
+	if(confirm('你確定要刪除"'+service+'"嗎？')){
+		$.ajax({
+			url: "http://"+ajaxUrlPort+"/deleteWD",
+			type: "GET",
+			dataType: 'json',
+			data:{id:id},
+			contentType: "application/json; charset=utf-8",
+			success: function (data) {
+				if(data['result'] == 0){
+					alert('刪除成功')
+					getWDList();
+				}
+			},				
+			error: function(xhr) {
+			  alert('Ajax deleteWD 發生錯誤:'+JSON.stringify(xhr)); 
+			}
+		});	
+	}
+}
+
+function editWD(id){
+	$('#wdEditID').val(id)
+
+	for(i in wd_list){
+		if(wd_list[i]['id'] == id){		
+			service = wd_list[i]['service'] 
+			PERNRList = wd_list[i]['PERNRList']
+			chatsnList = wd_list[i]['chatsnList']
+			url = wd_list[i]['url']
+			frequency = wd_list[i]['frequency']
+			status = wd_list[i]['status'] === 0 ? '啟用' : '停用'
+			
+			$('#service').val(service)
+			$('#PERNRList').val(PERNRList)
+			$('#chatsnList').val(chatsnList)			
+			
+			$('#url').val(url)
+			$('#frequency').html(frequency)
+			$('#status').html(status)
+		}
+	}
+	
+	$('.createWD').hide()
+	$('.editWD').show() 
+	 
+}
+
+ 
+
+function exit_subscribe(){
+	init_keyword_subscribe()
+}
+
+function changeGraph(id,item){
+	
+	$('#'+id).html(item);
+}
+$(document).ready(function(){ 
+	getWDList()
+});	
+</script>
+<section class="content-header">
+  <h1>
+    服務監控
+    <small>即時監控系統的運作情形</small>
+  </h1>
+  <ol class="breadcrumb">
+    <li><a href="#"><i class="fa fa-dashboard"></i>首頁</a></li>
+    <li class="active">服務監控</li>
+  </ol>
+</section>
+ 
+<input id="wdEditID" style="display:none;" value='0'>
+<section class="content">
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="box">
+        <div class="box-header">
+          <!--3 class="box-title">使用+代表(AND)交集與空格代表(OR)聯集</h3-->
+        </div>
+        <div class="box-body">
+		 
+		 
+			<span class="form-horizontal">
+              <div class="box-body">
+			    
+				<div class="form-group">
+                  <label for="" class="col-sm-1 control-label" style="width:100px;">服務設定</label>
+                  <div class="row">
+					<div class="col-xs-3">服務名稱
+					  <input type="text" class="form-control wdForm" id="service" placeholder="ex : 情報守門員Apache">
+					</div>
+					<div class="col-xs-4">聯絡人(工號姓名，多組以逗點分隔) 
+					  <input type="text" class="form-control wdForm" id="PERNRList" placeholder="ex : 18017220梁均銘,18017220梁均銘">
+					</div>
+					<div class="col-xs-3">聯絡Mapp群(多組以逗點分隔) 
+					  <input type="text" style="width:242px;" class="form-control wdForm" id="chatsnList" placeholder="ex :67731,3456,34421,5566">
+					</div>
+				  </div>			  
+				</div>
+			    
+                <div class="form-group">
+                  <label for="url" class="col-sm-1 control-label" style="width:100px;">服務URL</label>
+                  <div class="col-sm-5" >
+                    <input type="" class="form-control wdForm" style="width:px;" id="url" placeholder="網址或API">	 
+                  </div>
+				  
+				  
+				  <div class="btn-group">
+				    <label for="frequency" class="col-sm-1 control-label" style="width:90px;">回報頻率</label>
+                    <button type="button" class="btn btn-info btn-flat " id="frequency" data-toggle="dropdown">每1小時</button>
+                    <ul class="dropdown-menu" role="menu">
+                      <li onclick="changeGraph('frequency','每12小時')">每12小時</li>
+                      <li onclick="changeGraph('frequency','每6小時')">每6小時</li>
+                      <li onclick="changeGraph('frequency','每2小時')">每2小時</li>
+					  <li onclick="changeGraph('frequency','每1小時')">每1小時</li>
+                      <li onclick="changeGraph('frequency','每30分鐘')">每30分鐘</li>
+					  <li onclick="changeGraph('frequency','每10分鐘')">每10分鐘</li>
+                    </ul>
+                  </div>
+				  
+				  
+				  <div class="btn-group">
+				    <label for="status" class="col-sm-1 control-label" style="width:60px;">狀態</label>
+                    <button type="button" class="btn btn-info btn-flat" id="status" data-toggle="dropdown">啟用</button>
+                    <ul class="dropdown-menu" role="menu">
+                      <li onclick="changeGraph('status','啟用')">啟用</li>
+                      <li onclick="changeGraph('status','停用')">停用</li>
+                    </ul>
+                  </div>
+				  
+				  <div class="btn-group" style="margin-left:24px;">
+					<button type="" onclick="createWD();" id="createSubscribe_tw" class="btn btn-success createWD" style="display:;">新增</button>
+					<button type="" onclick="createWD();" id="editSubscribe_tw1" class="btn btn-danger pull-left editWD" style="display:none ;">修改</button>&nbsp;&nbsp;&nbsp;&nbsp; 
+					<button type="" onclick="getWDList()" id="editSubscribe_tw2" class="btn btn-success pull editWD" style="display:none;margin-left:10px;">不修改</button>
+				  </div>	
+                </div>
+				 
+				
+              </div>
+               
+            </span>
+            <table id=" " class="table table-bordered table-hover" style='font-size:12px;'>
+              <thead>
+                <tr> 
+                  <th>no</th>
+				  <th>設定</th>
+				  <th>服務說明</th>
+                  <th>聯絡人</th>
+				  <th>聯絡Mapp群</th>
+				  <th>url</th>
+				  <th>回報頻率</th>
+				  <th>狀態</th>
+				  <th>更新時間</th>
+                </tr>
+              </thead>
+              <tbody id="wd_list">              
+              </tbody> 
+            </table>		
+		  
+        </div>
+      </div>
+    </div>
+  </div>
+   
+   
+  
+  
+ 
+ 
+</section> 

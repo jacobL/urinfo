@@ -1,0 +1,84 @@
+ 
+<!-- Content Header (Page header) -->
+
+<script>     
+//var ajaxUrlPort = '127.0.0.1:81'; //桌機 python flask server; not apache http
+//var ajaxUrlPort = '10.55.52.98:85'; //HPC idap均銘開發
+var ajaxUrlPort = 'pc89600059495s:85'; //HPC idap均銘開發
+function getLogisticNews(){ 
+	$.ajax({
+		url: "http://"+ajaxUrlPort+"/getLawNews",
+		type: "GET",
+		dataType: 'json',
+		//data:{id:id},
+		contentType: "application/json; charset=utf-8",
+		success: function (data) {
+			console.log('getLawNews:')
+			console.log(data)
+			law_list = data['law_list']; 
+			htmlData = "";			
+			no = 1;
+			for(i in logistic_list){
+				id = logistic_list[i]['id']
+				web = logistic_list[i]['web']
+				title = logistic_list[i]['title'] 
+				publishdate = logistic_list[i]['publishdate']
+				content = logistic_list[i]['content'] 
+				htmlData = htmlData+"<tr style='font-size:14px;'><td>"+no+"</td>";
+				htmlData = htmlData+"<td style='text-align:left;'><a href='"+url+"' target='_blank'>"+title+"</a></td>";
+				htmlData = htmlData+"<td>"+web+"</td>";
+				htmlData = htmlData+"<td>"+publishdate+"</td></tr>";
+				no++;
+			} 
+			$('#logistic_list').html(htmlData);               
+		},				
+		error: function(xhr) {
+		  alert('logistic_list 發生錯誤:'+JSON.stringify(xhr)); 
+		}
+	});			
+}
+
+$(document).ready(function(){
+	getLogisticNews()
+});	
+</script>
+<section class="content-header">
+  <h1>
+    法務專利新聞
+    <small>各國法務專利訊息</small>
+  </h1>
+  <ol class="breadcrumb">
+    <!-- TODO -->
+    <li><a href="#"><i class="fa fa-dashboard"></i>首頁</a></li>
+    <li class="active">法務專利</li>
+  </ol>
+</section>
+
+<!-- Main content -->
+<section class="content">
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title">各網站新聞</h3>
+        </div>
+        <!-- /.box-header -->
+        <div class="box-body">
+          <table class="table table-bordered table-hover text-center">
+                <thead>
+                  <tr> 
+                    <th>no</th>
+                    <th>標題</th>  
+					<th>網站</th>
+                    <th>日期</th>
+					 					
+                  </tr>
+                </thead>
+                <tbody id="logistic_list">              
+                </tbody> 
+              </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section> 

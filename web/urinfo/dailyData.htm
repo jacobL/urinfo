@@ -1,0 +1,516 @@
+ 
+<!-- Content Header (Page header) -->
+<style>
+#chartdiv {
+  width: 100%;
+  height: 100%;
+}
+</style> 
+<script>     
+webList = {'chosun':'朝鮮日報(南韓)', 'yomiuri':'讀賣新聞(日本)', 'nhk':'NHK日本放送', 'cnn':'CNN', 'reuters':'路透社', 'un':'UN News','dw':'德國之聲'}
+				
+//var ajaxUrlPort = '127.0.0.1:81'; //桌機 python flask server; not apache http
+//var ajaxUrlPort = '10.55.52.98:85'; //HPC idap均銘開發
+var ajaxUrlPort = 'pc89600059495s:85'; //HPC idap均銘開發
+var ajaxUrlPort = '10.55.23.168:31081'; //HPC idap均銘開發
+function getDailyData(){ 
+	$.ajax({
+		url: "http://"+ajaxUrlPort+"/getDailyData",
+		type: "GET",
+		dataType: 'json',
+		//data:{id:id},
+		contentType: "application/json; charset=utf-8",
+		success: function (data) {
+			console.log('getDailyData:')
+			console.log(data)
+			news_daily = data['news_daily'];
+			news_daily_detail = data['news_daily_detail'];
+			news_ner = data['news_ner'];
+			news_disaster = data['news_disaster'];
+			news_source = data['news_source']; // 日韓 每日各網的新聞數量
+			
+			
+			htmlData = "";			
+			for(i in news_daily){
+				publishdate = news_daily[i]["publishdate"]
+                count = news_daily[i]["count"] 
+				htmlData = htmlData+"<tr><td>"+publishdate+"</td><td>"+count+"</td></tr>";
+				if(i>10) break;
+			} 
+			$('#news_daily').html(htmlData); 
+             
+			htmlData = "";			
+			for(i in news_daily_detail){
+				publishdate = news_daily_detail[i]["publishdate"]
+				web = news_daily_detail[i]["web"]
+                count = news_daily_detail[i]["count"] 
+				htmlData = htmlData+"<tr><td>"+publishdate+"</td><td>"+web+"</td><td>"+count+"</td></tr>";
+				if(i>40) break;
+			} 
+			$('#news_daily_detail').html(htmlData);
+			 
+			htmlData = "";			
+			for(i in news_ner){
+				publishdate = news_ner[i]["publishdate"]
+                count = news_ner[i]["count"]
+				htmlData = htmlData+"<tr><td>"+publishdate+"</td><td>"+count+"</td></tr>";
+				if(i>10) break;
+			} 
+			$('#news_ner').html(htmlData); 
+			
+			htmlData = "";			
+			for(i in news_disaster){
+				publishdate = news_disaster[i]["publishdate"]
+                count = news_disaster[i]["count"]
+				htmlData = htmlData+"<tr><td>"+publishdate+"</td><td>"+count+"</td></tr>";
+				if(i>10) break;
+			} 
+			$('#news_disaster').html(htmlData); 
+			
+			htmlData = "";			
+			for(i in news_source){
+				publishdate = news_source[i]["publishdate"]
+				//if(news_source[i]["web"] == 'chosun') web = '朝鮮日報(南韓)';
+				//else if(news_source[i]["web"] == 'yomiuri') web = '讀賣新聞(日本)';
+				
+				web = webList[news_source[i]["web"]];
+                count = news_source[i]["count"]
+				htmlData = htmlData+"<tr><td>"+publishdate+"</td><td>"+web+"</td><td>"+count+"</td></tr>";
+				if(i>10) break;
+			} 
+			$('#news_source').html(htmlData); 
+			
+			
+		},				
+		error: function(xhr) {
+		  alert('Ajax request 發生錯誤:'+JSON.stringify(xhr)); 
+		}
+	});			
+}
+
+$(document).ready(function(){
+	getDailyData()
+});	
+</script>
+<section class="content-header">
+  <h1>
+    排程監控 
+    <small>每日ETL各階段數量</small>
+  </h1>
+  <ol class="breadcrumb">
+    <!-- TODO -->
+    <li><a href="#"><i class="fa fa-dashboard"></i>首頁</a></li>
+    <li class="active">排程監控</li>
+  </ol>
+</section>
+
+<!-- Main content -->
+<section class="content">
+    
+  <div class="row">
+	<div class="col-md-6">
+	  <div class="nav-tabs-custom">
+		<ul class="nav nav-tabs pull-right">
+		  <!--li class="dropdown">
+			<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+			  Dropdown <span class="caret"></span>
+			</a>
+			<ul class="dropdown-menu">
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Action</a></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Another action</a></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Something else here</a></li>
+			  <li role="presentation" class="divider"></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Separated link</a></li>
+			</ul>
+		  </li>
+		  <li><a href="#tab_1-3" data-toggle="tab">Tab 3</a></li-->
+		  <li><a href="#tab_1-2" data-toggle="tab">來源網站</a></li>		  
+		  <li class="active"><a href="#tab_1-1" data-toggle="tab">每日總量</a></li>
+		  <li class="pull-left header"><i class="fa fa-bar-chart"></i>每日新聞分佈</li>
+		</ul>
+		<div class="tab-content">
+		  <div class="tab-pane active" id="tab_1-1">
+			<table id="" class="table table-bordered table-hover">
+            <thead>
+              <tr> 
+                <th>發佈日期</th> 
+                <!--th>來源網站</th--> 
+                <th>筆數</th>  
+              </tr>
+            </thead>
+            <tbody id="news_daily">              
+            </tbody> 
+            </table>
+		  </div> 
+		  <div class="tab-pane" id="tab_1-2">tab_1-2
+		    <table id="" class="table table-bordered table-hover">
+            <thead>
+              <tr> 
+                <th>發佈日期</th> 
+                <th>來源網站</th> 
+                <th>筆數</th>  
+              </tr>
+            </thead>
+            <tbody id="news_daily_detail">              
+            </tbody> 
+            </table>
+		  </div>
+		  <div class="tab-pane" id="tab_1-3">tab_1-3
+		  </div>
+		</div>
+	  </div>
+	</div>
+	
+	<div class="col-md-6">
+	  <div class="nav-tabs-custom">
+		<ul class="nav nav-tabs pull-right">
+		  <!--li class="dropdown">
+			<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+			  Dropdown <span class="caret"></span>
+			</a>
+			<ul class="dropdown-menu">
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Action</a></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Another action</a></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Something else here</a></li>
+			  <li role="presentation" class="divider"></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Separated link</a></li>
+			</ul>
+		  </li>
+		  <li><a href="#tab_4-3" data-toggle="tab">Tab 3</a></li>
+		  <li><a href="#tab_4-2" data-toggle="tab">Tab 2</a></li-->		  
+		  <li class="active"><a href="#tab_4-1" data-toggle="tab">來源網站</a></li>
+		  <li class="pull-left header"><i class="fa fa-th"></i>每日外語新聞</li>
+		</ul>
+		<div class="tab-content">
+		  <div class="tab-pane active" id="tab_4-1">	
+
+			<table id="" class="table table-bordered table-hover">
+            <thead>
+              <tr> 
+                <th>發佈日期</th>
+				<th>網站</th>
+                <th>筆數</th>  
+              </tr>
+            </thead>
+            <tbody id="news_source">              
+            </tbody> 
+            </table>
+		  
+		  </div> 
+		  <div class="tab-pane" id="tab_4-2">tab_4-2
+		  </div>
+		  <div class="tab-pane" id="tab_4-3">tab_4-3
+		  </div>
+		</div>
+	  </div>
+	</div>
+  </div> 
+	
+  
+  
+  <div class="row">
+	<div class="col-md-6">
+	  <div class="nav-tabs-custom">
+		<ul class="nav nav-tabs pull-right">
+		  <li class="dropdown">
+			<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+			  Dropdown <span class="caret"></span>
+			</a>
+			<ul class="dropdown-menu">
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Action</a></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Another action</a></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Something else here</a></li>
+			  <li role="presentation" class="divider"></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Separated link</a></li>
+			</ul>
+		  </li>
+		  <li><a href="#tab_3-3" data-toggle="tab">Tab 3</a></li>
+		  <li><a href="#tab_3-2" data-toggle="tab">Tab 2</a></li>		  
+		  <li class="active"><a href="#tab_3-1" data-toggle="tab">Tab 1</a></li>
+		  <li class="pull-left header"><i class="fa fa-bolt"></i>每日災害分佈</li>
+		</ul>
+		<div class="tab-content">
+		  <div class="tab-pane active" id="tab_3-1">
+		    <table id="" class="table table-bordered table-hover">
+            <thead>
+              <tr> 
+                <th>發佈日期</th> 
+                <th>筆數</th>  
+              </tr>
+            </thead>
+            <tbody id="news_disaster">              
+            </tbody> 
+            </table>
+		  </div> 
+		  <div class="tab-pane" id="tab_3-2">tab_3-2
+		  </div>
+		  <div class="tab-pane" id="tab_3-3">tab_3-3
+		  </div>
+		</div>
+	  </div>
+	</div>
+	
+	<div class="col-md-6">
+	  <div class="nav-tabs-custom">
+		<ul class="nav nav-tabs pull-right">
+		  <li class="dropdown">
+			<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+			  Dropdown <span class="caret"></span>
+			</a>
+			<ul class="dropdown-menu">
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Action</a></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Another action</a></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Something else here</a></li>
+			  <li role="presentation" class="divider"></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Separated link</a></li>
+			</ul>
+		  </li>
+		  <li><a href="#tab_2-3" data-toggle="tab">Tab 3</a></li>
+		  <li><a href="#tab_2-2" data-toggle="tab">Tab 2</a></li>		  
+		  <li class="active"><a href="#tab_2-1" data-toggle="tab">Tab 1</a></li>
+		  <li class="pull-left header"><i class="fa fa-cubes"></i>每日NER分佈</li>
+		</ul>
+		<div class="tab-content">
+		  <div class="tab-pane active" id="tab_2-1">
+			<table id="" class="table table-bordered table-hover">
+            <thead>
+              <tr> 
+                <th>發佈日期</th> 
+                <th>筆數</th>  
+              </tr>
+            </thead>
+            <tbody id="news_ner">              
+            </tbody> 
+            </table>
+		  </div> 
+		  <div class="tab-pane" id="tab_2-2">tab_2-2			 
+		  </div>
+		  <div class="tab-pane" id="tab_2-3">tab_2-3
+		  </div>
+		</div>
+	  </div>
+	</div>
+  </div> 
+	
+
+
+  <div class="row">
+	<div class="col-md-6">
+	  <div class="nav-tabs-custom">
+		<ul class="nav nav-tabs pull-right">
+		  <li class="dropdown">
+			<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+			  Dropdown <span class="caret"></span>
+			</a>
+			<ul class="dropdown-menu">
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Action</a></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Another action</a></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Something else here</a></li>
+			  <li role="presentation" class="divider"></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Separated link</a></li>
+			</ul>
+		  </li>
+		  <li><a href="#tab_5-3" data-toggle="tab">Tab 3</a></li>
+		  <li><a href="#tab_5-2" data-toggle="tab">Tab 2</a></li>		  
+		  <li class="active"><a href="#tab_5-1" data-toggle="tab">Tab 1</a></li>
+		  <li class="pull-left header"><i class="fa fa-users"></i>新聞源重要性</li>
+		</ul>
+		<div class="tab-content">
+		  <div class="tab-pane active" id="tab_5-1">	
+
+			<div class="box-header">
+              <h3 class="box-title">Simple Full Width Table</h3>
+
+              <div class="box-tools">
+                <ul class="pagination pagination-sm no-margin pull-right">
+                  <li><a href="#">&laquo;</a></li>
+                  <li><a href="#">1</a></li>
+                  <li><a href="#">2</a></li>
+                  <li><a href="#">3</a></li>
+                  <li><a href="#">&raquo;</a></li>
+                </ul>
+              </div>
+            </div> 
+            <div class="box-body no-padding">
+              <table class="table">
+                <tr>
+                  <th style="width: 10px">#</th>
+                  <th>Task</th>
+                  <th>Progress</th>
+                  <th style="width: 40px">Label</th>
+                </tr>
+                <tr>
+                  <td>1.</td>
+                  <td>Update software</td>
+                  <td>
+                    <div class="progress progress-xs">
+                      <div class="progress-bar progress-bar-danger" style="width: 55%"></div>
+                    </div>
+                  </td>
+                  <td><span class="badge bg-red">55%</span></td>
+                </tr>
+                <tr>
+                  <td>2.</td>
+                  <td>Clean database</td>
+                  <td>
+                    <div class="progress progress-xs">
+                      <div class="progress-bar progress-bar-yellow" style="width: 70%"></div>
+                    </div>
+                  </td>
+                  <td><span class="badge bg-yellow">70%</span></td>
+                </tr>
+                <tr>
+                  <td>3.</td>
+                  <td>Cron job running</td>
+                  <td>
+                    <div class="progress progress-xs progress-striped active">
+                      <div class="progress-bar progress-bar-primary" style="width: 30%"></div>
+                    </div>
+                  </td>
+                  <td><span class="badge bg-light-blue">30%</span></td>
+                </tr>
+                <tr>
+                  <td>4.</td>
+                  <td>Fix and squish bugs</td>
+                  <td>
+                    <div class="progress progress-xs progress-striped active">
+                      <div class="progress-bar progress-bar-success" style="width: 90%"></div>
+                    </div>
+                  </td>
+                  <td><span class="badge bg-green">90%</span></td>
+                </tr>
+              </table>
+            </div>
+			
+		  </div> 
+		  <div class="tab-pane" id="tab_5-2">			 
+		  </div>
+		  <div class="tab-pane" id="tab_5-3">
+		  </div>
+		</div>
+	  </div>
+	</div>
+	
+	<div class="col-md-6">
+	  <div class="nav-tabs-custom">
+		<ul class="nav nav-tabs pull-right">
+		  <li class="dropdown">
+			<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+			  Dropdown <span class="caret"></span>
+			</a>
+			<ul class="dropdown-menu">
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Action</a></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Another action</a></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Something else here</a></li>
+			  <li role="presentation" class="divider"></li>
+			  <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Separated link</a></li>
+			</ul>
+		  </li>
+		  <li><a href="#tab_6-3" data-toggle="tab">Tab 3</a></li>
+		  <li><a href="#tab_6-2" data-toggle="tab">Tab 2</a></li>		  
+		  <li class="active"><a href="#tab_6-1" data-toggle="tab">Tab 1</a></li>
+		  <li class="pull-left header"><i class="fa  fa-truck"></i>廠商災情事件</li>
+		</ul>
+		<div class="tab-content">
+		  <div class="tab-pane active" id="tab_6-1">
+
+			<div class="box-header">
+              <h3 class="box-title">Simple Full Width Table</h3>
+
+              <div class="box-tools">
+                <ul class="pagination pagination-sm no-margin pull-right">
+                  <li><a href="#">&laquo;</a></li>
+                  <li><a href="#">1</a></li>
+                  <li><a href="#">2</a></li>
+                  <li><a href="#">3</a></li>
+                  <li><a href="#">&raquo;</a></li>
+                </ul>
+              </div>
+            </div> 
+            <div class="box-body no-padding">
+              <table class="table">
+                <tr>
+                  <th style="width: 10px">#</th>
+                  <th>Task</th>
+                  <th>Progress</th>
+                  <th style="width: 40px">Label</th>
+                </tr>
+                <tr>
+                  <td>1.</td>
+                  <td>Update software</td>
+                  <td>
+                    <div class="progress progress-xs">
+                      <div class="progress-bar progress-bar-danger" style="width: 55%"></div>
+                    </div>
+                  </td>
+                  <td><span class="badge bg-red">55%</span></td>
+                </tr>
+                <tr>
+                  <td>2.</td>
+                  <td>Clean database</td>
+                  <td>
+                    <div class="progress progress-xs">
+                      <div class="progress-bar progress-bar-yellow" style="width: 70%"></div>
+                    </div>
+                  </td>
+                  <td><span class="badge bg-yellow">70%</span></td>
+                </tr>
+                <tr>
+                  <td>3.</td>
+                  <td>Cron job running</td>
+                  <td>
+                    <div class="progress progress-xs progress-striped active">
+                      <div class="progress-bar progress-bar-primary" style="width: 30%"></div>
+                    </div>
+                  </td>
+                  <td><span class="badge bg-light-blue">30%</span></td>
+                </tr>
+                <tr>
+                  <td>4.</td>
+                  <td>Fix and squish bugs</td>
+                  <td>
+                    <div class="progress progress-xs progress-striped active">
+                      <div class="progress-bar progress-bar-success" style="width: 90%"></div>
+                    </div>
+                  </td>
+                  <td><span class="badge bg-green">90%</span></td>
+                </tr>
+              </table>
+            </div>
+		  
+		  </div> 
+		  <div class="tab-pane" id="tab_6-2">tab_6-2
+		  </div>
+		  <div class="tab-pane" id="tab_6-3">tab_6-3
+		  </div>
+		</div>
+	  </div>
+	</div>
+  </div> 
+  
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title">每日新聞數量</h3>
+        </div>
+        <!-- /.box-header -->
+        <div class="box-body">
+          <table id="" class="table table-bordered table-hover">
+            <thead>
+              <tr> 
+                <th>發佈日期</th> 
+                <!--th>來源網站</th--> 
+                <th>筆數</th>  
+              </tr>
+            </thead>
+            <tbody id="news_dailyxx">              
+            </tbody> 
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+ 
+</section> 

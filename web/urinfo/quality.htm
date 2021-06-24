@@ -1,0 +1,259 @@
+<style>
+#chartdiv {
+  width: 100%;
+  height: 100%;
+}
+</style>
+<!-- amcharts Resources -->
+<!--
+<script src="../js/coq/3.1.1/jquery.js"></script>
+<script src="https://www.amcharts.com/lib/4/core.js"></script>
+<script src="https://www.amcharts.com/lib/4/charts.js"></script>
+<script src="https://www.amcharts.com/lib/4/plugins/wordCloud.js"></script>
+<script src="https://www.amcharts.com/lib/4/themes/spiritedaway.js"></script>
+<script src="https://www.amcharts.com/lib/4/themes/animated.js"></script>
+
+ 
+<link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+<script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script> 
+-->
+<section class="content-header">
+  <h1>
+    品質監控
+    <small>從使用情境回饋，得知品質管控方向</small>
+  </h1>
+  <ol class="breadcrumb">
+    <!-- TODO -->
+    <li><a href="#"><i class="fa fa-dashboard"></i>首頁</a></li>
+    <li class="active">品質監控</li>
+  </ol>
+</section>
+
+<!-- Main content -->
+<section class="content">
+   
+  <!-- Main row -->
+  <div class="row" >
+    <div class="col-md-6" >
+      <div class="box box-success">
+        <div class="box-header with-border">
+          <h3 class="box-title" id="title_acer"> 品質關鍵字</h3>
+          <div class="box-tools pull-right">
+          </div>
+        </div>
+        <div class="box-body">
+          <div class="chart" style="height:250px;">
+			<div id="chart_acer"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+	<div class="col-md-6" >
+      <div class="box box-success">
+        <div class="box-header with-border">
+          <h3 class="box-title" id="title_asus"> 品質關鍵字</h3>
+          <div class="box-tools pull-right">
+          </div>
+        </div>
+        <div class="box-body">
+          <div class="chart" style="height:250px;">
+			<div id="chart_asus"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row" >
+    <div class="col-md-6" >
+      <div class="box box-success">
+        <div class="box-header with-border">
+          <h3 class="box-title" id="title_lenovo"> 品質關鍵字</h3>
+          <div class="box-tools pull-right">
+          </div>
+        </div>
+        <div class="box-body">
+          <div class="chart" style="height:250px;">
+			<div id="chart_lenovo"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+	<div class="col-md-6" >
+      <div class="box box-success">
+        <div class="box-header with-border">
+          <h3 class="box-title" id="title_hp"> 品質關鍵字</h3>
+          <div class="box-tools pull-right">
+          </div>
+        </div>
+        <div class="box-body">
+          <div class="chart" style="height:250px;">
+			<div id="chart_hp"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row" >
+    <div class="col-md-6" >
+      <div class="box box-success">
+        <div class="box-header with-border">
+          <h3 class="box-title" id="title_dell"> 品質關鍵字</h3>
+          <div class="box-tools pull-right">
+          </div>
+        </div>
+        <div class="box-body">
+          <div class="chart" style="height:250px;">
+			<div id="chart_dell"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+	<div class="col-md-6" >
+      <div class="box box-success">
+        <div class="box-header with-border">
+          <h3 class="box-title" id="title_all"> 品質關鍵字</h3>
+          <div class="box-tools pull-right">
+          </div>
+        </div>
+        <div class="box-body">
+          <div class="chart" style="height:250px;">
+			<div id="chart_all"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title" id="tableName"></h3>
+        </div>
+        <div class="box-body">
+          <table id="resultTable" class="table" style=" "></table>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+ 
+</section>
+<!-- /.content -->
+<script>    
+var ajaxUrlPort = 'pc89600059495s:34084'; //hpc
+var ajaxUrlPort = '10.55.23.168:34084'; //hpc
+//var ajaxUrlPort = '127.0.0.1:84';
+// Themes begin
+
+// Themes end
+companylist = ['acer','asus','lenovo','hp','dell','all']
+$(document).ready(function() {
+	//wordCloud('acer');
+    //wordCloud('asus'); 
+	for(i = 0 ; i < companylist.length ; i++){
+		wordCloud(companylist[i]);
+	}
+});
+
+function wordCloud(company){
+	
+	$('#title_'+company).html(company.toUpperCase()+' 品質關鍵字');
+	$.ajax({
+		url: "http://"+ajaxUrlPort+"/getWordCloud",
+		type: "GET",
+		dataType: 'json',
+		data:{company:company},
+		contentType: "application/json; charset=utf-8",
+		success: function (data) {
+			console.log('wordCloud company:'+company+' data:')
+			console.log(data[0])
+			am4core.useTheme(am4themes_spiritedaway);
+			am4core.useTheme(am4themes_animated);
+			var chart = am4core.create("chart_"+company, am4plugins_wordCloud.WordCloud);
+			chart.logo.height = -150000; //關閉amchart v4的logo
+			var series = chart.series.push(new am4plugins_wordCloud.WordCloudSeries());
+
+			series.accuracy = 4;
+			series.step = 15;
+			series.rotationThreshold = 0.7;
+			series.maxCount = 200;
+			series.minWordLength = 5;
+			series.labels.template.margin(4,4,4,4);
+			series.maxFontSize = am4core.percent(100); 
+			series.minFontSize = am4core.percent(10);
+			series.data = JSON.parse(data[0]);
+			
+			series.dataFields.word = "tag";
+			series.dataFields.value = "count";
+			//series.text = "Though yet Though Though Though Though"; 
+			series.colors = new am4core.ColorSet();
+			series.colors.passOptions = {}; // makes it loop
+
+			//series.labelsContainer.rotation = 45;
+			series.angles = [0,-90];
+			series.fontWeight = "700"
+			series.labels.template.tooltipText = "{word}: {value}";
+			
+			var hoverState = series.labels.template.states.create("hover");
+			hoverState.properties.fill = am4core.color("#FF0000");
+			//setInterval(function () {
+			//  series.dataItems.getIndex(Math.round(Math.random() * (series.dataItems.length - 1))).setValue("value", Math.round(Math.random() * 10));
+			//}, 10000)
+			series.labels.template.events.on("hit", function(ev) {
+			  getUrlByKeyword(company,ev.target.currentText)
+			}, this);
+		},				
+		error: function(xhr) {
+		  alert('getWordCloud 發生錯誤:'+JSON.stringify(xhr)); 
+		}
+	});		
+}
+
+function getUrlByKeyword(company,keyword){
+	$.ajax({
+		url: "http://"+ajaxUrlPort+"/getUrlByKeyword",
+		type: "GET",
+		dataType: 'json',
+		data:{company:company, keyword:keyword},
+		contentType: "application/json; charset=utf-8",
+		success: function (data) { 
+			console.log('getUrlByKeyword data:') 
+			console.log(data) 
+			
+			$('#tableName').html(company.toUpperCase()+' 包含"'+keyword+'"的論壇文章');
+			//resultTable = '<thead class="thead-dark"><tr><th scope="col">#</th><th style="width:450px;" scope="col">標題</th><th scope="col" style="width:60px;">應用</th><th scope="col">產品模型</th><th scope="col">關鍵字</th><th scope="col">發表日</th></tr></thead><tbody>';
+			
+			resultTable = '<thead class="thead-dark"><tr><th scope="col">#</th><th style="width:450px;" scope="col">標題</th><th scope="col" style="width:60px;">應用</th><th scope="col">關鍵字</th><th scope="col">發表日</th></tr></thead><tbody>';
+			for(var i in data){
+				//$("#resultTable").show(); 
+  				id = data[i]['id']
+				url = data[i]['url']
+				title = data[i]['title']
+				publishdate = data[i]['publishdate']			
+				keywordlistTmp = data[i]['keywordlist'].split(',');
+				app = data[i]['app']
+				//model = data[i]['model']							
+				keywordlist = '';
+				for(k = 0 ; k < keywordlistTmp.length ; k ++){
+					keywordlist = keywordlist+ (k+1)+'.'+keywordlistTmp[k]+' ';
+				}
+				resultTable = resultTable + '<tr><th scope="row">'+(parseInt(i)+1)+'</th>'
+				+'<td><a href="'+url+'" target="_blank">'+title+'</a></td>'
+				+'<td>'+app+'</td>'
+				//+'<td>'+model+'</td>'
+				+'<td>'+keywordlist+'</td>'
+				+'<td>'+publishdate+'</td></tr>';
+			}
+			resultTable = resultTable + '</tbody>';
+			$("#resultTable").html(resultTable);
+		},				
+		error: function(xhr) {
+		  alert('Ajax getUrlByKeyword 發生錯誤:'+JSON.stringify(xhr)); 
+		}
+	});	
+
+}
+</script>

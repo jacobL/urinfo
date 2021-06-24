@@ -1,0 +1,239 @@
+ 
+<style>
+#chartdiv {
+  width: 100%;
+  height: 100%;
+}
+</style> 
+<script>    
+var chart = "";
+function showmap(eventmap){
+	am4core.ready(function() {
+
+		// Themes begin
+		am4core.useTheme(am4themes_animated);
+		// Themes end
+
+		// Create map instance
+		chart = am4core.create("chartdiv", am4maps.MapChart);
+		chart.logo.height = -150000; //關閉amchart v4的logo
+
+		// Set map definition
+		chart.geodata = am4geodata_worldHigh;
+
+		// Set projection
+		chart.projection = new am4maps.projections.Mercator();
+
+		// Center on the groups by default
+		chart.homeZoomLevel = 7;
+		chart.homeGeoPoint = { longitude: 82, latitude: 10 };
+
+		// Polygon series
+		var polygonSeries = chart.series.push(new am4maps.MapPolygonSeries());
+		polygonSeries.exclude = ["AQ"];
+		polygonSeries.useGeodata = true;
+		polygonSeries.nonScalingStroke = true;
+		polygonSeries.strokeOpacity = 0.5;
+
+		// Image series
+		var imageSeries = chart.series.push(new am4maps.MapImageSeries());
+		var imageTemplate = imageSeries.mapImages.template;
+		imageTemplate.propertyFields.longitude = "longitude";
+		imageTemplate.propertyFields.latitude = "latitude";
+		
+		imageTemplate.nonScaling = true;
+		//imageTemplate.nonScaling = false;
+
+		var image = imageTemplate.createChild(am4core.Image);
+		image.propertyFields.href = "imageURL";
+		image.propertyFields.width = "width";
+		image.propertyFields.height = "height";
+		image.horizontalCenter = "middle";
+		image.verticalCenter = "middle";
+
+		var label = imageTemplate.createChild(am4core.Label);
+		label.text = "{label}";
+		label.horizontalCenter = "middle";
+		label.verticalCenter = "top";
+		label.dy = 20;
+		console.log('eventmap:');
+		console.log(eventmap);
+		imageSeries.data = eventmap;		
+	});  
+}	
+
+var ajaxUrlPort = '127.0.0.1:81'; //桌機 python flask server; not apache http
+var ajaxUrlPort = 'pc89600059495s:85'; //HPC idap均銘開發
+function getDisasterMap(){ 
+	$.ajax({
+		url: "http://"+ajaxUrlPort+"/getDisasterMap",
+		type: "GET",
+		dataType: 'json',
+		//data:{id:id},
+		contentType: "application/json; charset=utf-8",
+		success: function (data) {	
+			
+			console.log('getDisasterMap:')
+			console.log(data)
+			
+			//typhoonList = data['typhoonList'][];
+			name = data['typhoonList'][0]['name'];
+			name_ch = data['typhoonList'][0]['name_ch'];
+			
+			typhoonPathList = data['typhoonPathList'];
+			htmlData = ""  
+			disasterPath = [];
+			for(i in typhoonPathList){
+			//tc_id	analysis_time	intensity	lat	lng	speed_of_movement	movement_direction	pressure	max_wind_speed	status
+				tc_id = typhoonPathList[i]["tc_id"]
+                //name = typhoonPathList[i]["name"]
+                analysis_time = typhoonPathList[i]["analysis_time"]
+				//intensity = typhoonPathList[i]["intensity"] //強度
+				intensity = typhoonPathList[i]["intensity"] ? typhoonPathList[i]["intensity"] : '';
+                lat = typhoonPathList[i]["lat"]
+                lng = typhoonPathList[i]["lng"]
+				speed_of_movement = typhoonPathList[i]["speed_of_movement"] ? typhoonPathList[i]["speed_of_movement"] : ''; //移動速度
+				movement_direction = typhoonPathList[i]["movement_direction"] ? typhoonPathList[i]["movement_direction"] : ''; //方向
+				pressure = typhoonPathList[i]["pressure"] ? typhoonPathList[i]["pressure"] : '';	//氣壓			
+				max_wind_speed = typhoonPathList[i]["max_wind_speed"] ? typhoonPathList[i]["max_wind_speed"] : ''; //風速
+				status = typhoonPathList[i]["status"]
+				
+				htmlData = htmlData+"<tr><td>"+tc_id+"</td><td>"+name+"</td><td>"+analysis_time+"</td><td>"+lng+
+				"</td><td>"+lat+"</td><td>"+intensity+"</td><td>"+pressure+"</td><td>"+max_wind_speed+"</td><td>"+
+				speed_of_movement+"</td><td>"+movement_direction+"</td></tr>"
+				disasterPath.push({"longitude":lng,"latitude":lat,"width":30,"imageURL":"../svg/typhoon.svg","label":name})
+			}
+			$('#typhoonPath').html(htmlData);
+			
+			earthquakeList = data['earthquakeList'];
+			htmlData = "" 
+			for(i in earthquakeList){
+				datetime = earthquakeList[i]["datetime"]
+				latitude = earthquakeList[i]["latitude"]
+				longitude = earthquakeList[i]["longitude"]
+				depth = earthquakeList[i]["depth"]
+				mag = earthquakeList[i]["mag"]
+				region = earthquakeList[i]["region"]	
+				
+				htmlData = htmlData+"<tr><td>"+datetime+"</td><td>"+latitude+"</td><td>"+longitude+"</td><td>"+depth+
+				"</td><td>"+mag+"</td><td>"+region+"</td></tr>"
+				
+				disasterPath.push({"longitude":longitude,"latitude":latitude,"width":30,"imageURL":"../svg/earthquake.svg","label":region})
+			}
+			$('#earthquakeList').html(htmlData);			
+			
+			console.log('disasterPath')
+			console.log(disasterPath)
+			
+			showmap(disasterPath); 
+              
+			
+		},				
+		error: function(xhr) {
+		  alert('Ajax request 發生錯誤:'+JSON.stringify(xhr)); 
+		}
+	});			
+}
+
+$(document).ready(function(){
+	getDisasterMap()
+});	
+</script>
+<section class="content-header">
+  <h1>
+    災情預測 
+    <small>全球各地風災雨災等</small>
+  </h1>
+  <ol class="breadcrumb">
+    <!-- TODO -->
+    <li><a href="#"><i class="fa fa-dashboard"></i>首頁</a></li>
+    <li class="active">災情預測</li>
+  </ol>
+</section>
+
+<!-- Main content -->
+<section class="content">
+   
+  <!-- Main row -->
+  <div class="row" >
+    <div class="col-md-12" >
+      <!-- BAR CHART -->
+      <div class="box box-success">
+        <div class="box-header with-border">
+          <h3 class="box-title"></h3>
+
+          <div class="box-tools pull-right">
+            <!-- <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+            </button>
+            <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button> -->
+          </div>
+        </div>
+        <div class="box-body">
+          <div class="chart" style="height:400px;">
+            <!--canvas id="barChart" style="height:400px"></canvas-->
+			<div id="chartdiv"></div>
+          </div>
+        </div>
+        <!-- /.box-body -->
+      </div>
+    </div>
+     
+    <!-- /.box -->
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title">颱風/熱帶低氣壓 路徑預測</h3>
+        </div>
+        <!-- /.box-header -->
+        <div class="box-body">
+          <table id="" class="table table-bordered table-hover">
+            <thead>
+              <tr> 
+                <th>編號</th><!-- typhoonid -->
+                <th>名稱</th><!-- name(name_ch) -->
+                <th>日期</th><!-- datetimelog -->
+                <th>經度</th><!-- longitude -->
+                <th>緯度</th><!-- latitude -->
+				<th>強度</th><!-- intensity -->
+				<th>氣壓</th><!-- airpressure -->
+				<th>風速</th><!-- windspeed -->
+				<th>移動速度</th><!-- movingspeed -->
+				<th>方向</th><!-- direction -->
+              </tr>
+            </thead>
+            <tbody id="typhoonPath"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title">全球地震事件</h3>
+        </div>
+        <!-- /.box-header -->
+        <div class="box-body">
+          <table id="" class="table table-bordered table-hover">
+            <thead>
+              <tr> 
+                <th>日期時間</th><!-- datetime -->
+                <th>緯度</th><!-- latitude -->
+                <th>經度</th><!-- longitude -->
+                <th>深度</th><!-- depth -->
+                <th>強度</th><!-- mag -->
+				<th>國家地區</th><!-- region -->
+              </tr>
+            </thead>
+            <tbody id="earthquakeList"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+</section> 

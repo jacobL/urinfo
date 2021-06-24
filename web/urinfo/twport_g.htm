@@ -1,0 +1,426 @@
+ 
+<!-- Content Header (Page header) -->
+
+<script>     
+//var ajaxUrlPort = '127.0.0.1:89'; //桌機 python flask server; not apache http
+//var ajaxUrlPort = 'pc89600059495s:34089'; //HPC idap均銘開發
+var ajaxUrlPort = 'tnvppynsrv2/hpc_34089'; //137 轉址
+var tpnet_list = '';
+var second_port_country_list = '';
+var second_port_city_list = '';
+
+function getTpnet(){ 
+	$.ajax({
+		url: "http://"+ajaxUrlPort+"/getTpnet",
+		type: "GET",
+		dataType: 'json',
+		//data:{id:id},
+		contentType: "application/json; charset=utf-8",
+		success: function (data) {
+			console.log('getTpnet:')
+			console.log(data)
+			tpnet_list = data['tpnet_list']; 
+			creationdate = tpnet_list[0]['creationdate']			
+			$('#creationdate').html(creationdate);  
+			second_port_country_list = data['second_port_country_list']; 
+			second_port_city_list = data['second_port_city_list']; 
+			htmlData = "";			
+			no = 1;
+			 
+			for(i in tpnet_list){ 
+				ship_call_sign = tpnet_list[i]['ship_call_sign'] === null ? '' : tpnet_list[i]['ship_call_sign'];
+				ship_type = tpnet_list[i]['ship_type']
+				shipname_en = tpnet_list[i]['shipname_en']
+				visa = tpnet_list[i]['visa']
+				scheduled_arrival_datetime = tpnet_list[i]['scheduled_arrival_datetime']
+				scheduled_berthing_datetime = tpnet_list[i]['scheduled_berthing_datetime'] === null ? '' : tpnet_list[i]['scheduled_berthing_datetime']
+				berthing = tpnet_list[i]['berthing'] === null ? '' : tpnet_list[i]['berthing']
+				former_port = tpnet_list[i]['former_port']
+				vhf_datetime = tpnet_list[i]['vhf_datetime'] === null ? '' : tpnet_list[i]['vhf_datetime']
+				length_m = tpnet_list[i]['length_m']
+				anchor_datetime = tpnet_list[i]['anchor_datetime'] === null ? '' : tpnet_list[i]['anchor_datetime'];
+				
+				imo = tpnet_list[i]['imo'] === null ? '' : tpnet_list[i]['imo']
+                agent_name = tpnet_list[i]['agent_name']
+				shipname_tw = tpnet_list[i]['shipname_tw']
+				action = tpnet_list[i]['action']
+				through_port_datetime = tpnet_list[i]['through_port_datetime'] === null ? '' : tpnet_list[i]['through_port_datetime']
+				scheduled_departure_datetime = tpnet_list[i]['scheduled_departure_datetime'] === null ? '' : tpnet_list[i]['scheduled_departure_datetime']
+				berthing_datetime = tpnet_list[i]['berthing_datetime'] === null ? '' : tpnet_list[i]['berthing_datetime']
+				second_port_country = tpnet_list[i]['second_port_country']
+				second_port_city = tpnet_list[i]['second_port_city']
+				captain_eta = tpnet_list[i]['captain_eta'] === null ? '' : tpnet_list[i]['captain_eta']
+				tonnage = tpnet_list[i]['tonnage']
+				five_miles_datetime = tpnet_list[i]['five_miles_datetime'] === null ? '' : tpnet_list[i]['five_miles_datetime']
+				
+				city = tpnet_list[i]['city']
+				switch (city) {
+				  case 'KEL':
+					city = '基隆'
+					break;
+				  case 'TXG':
+					city = '台中'
+					break;
+				  case 'TPE':
+					city = '台北'
+					break;
+				  default:
+					city = '高雄'
+				}
+				
+				//creationdate = tpnet_list[i]['creationdate'] 
+				
+				htmlData = htmlData+"<tr style='border-top:1.5px #c2c2d6 solid;color:#0000b3;'><td>"+no+"</td>";
+				htmlData = htmlData+"<td>"+ship_call_sign+"</td>";
+				htmlData = htmlData+"<td>"+ship_type+"</td>";
+				htmlData = htmlData+"<td>"+shipname_en+"</td>";
+				htmlData = htmlData+"<td>"+visa+"</td>";
+				htmlData = htmlData+"<td>"+scheduled_arrival_datetime+"</td>";
+				htmlData = htmlData+"<td>"+scheduled_berthing_datetime+"</td>";
+				htmlData = htmlData+"<td>"+berthing+"</td>";
+				htmlData = htmlData+"<td>"+former_port+"</td>";
+				htmlData = htmlData+"<td>"+vhf_datetime+"</td>";
+				htmlData = htmlData+"<td>"+length_m+"</td>";
+				htmlData = htmlData+"<td>"+anchor_datetime+"</td></tr>";
+				
+				htmlData = htmlData+"<tr style='color:#663300;' ><td>"+city+"</td>";
+				htmlData = htmlData+"<td>"+imo+"</td>";
+				htmlData = htmlData+"<td>"+agent_name+"</td>";
+				htmlData = htmlData+"<td>"+shipname_tw+"</td>";
+				htmlData = htmlData+"<td>"+action+"</td>";
+				htmlData = htmlData+"<td>"+through_port_datetime+"</td>";
+				htmlData = htmlData+"<td>"+scheduled_departure_datetime+"</td>";
+				htmlData = htmlData+"<td>"+berthing_datetime+"</td>";
+				htmlData = htmlData+"<td>"+second_port_country+' '+second_port_city+"</td>";
+				htmlData = htmlData+"<td>"+captain_eta+"</td>";
+				htmlData = htmlData+"<td>"+tonnage+"</td>";
+				htmlData = htmlData+"<td>"+five_miles_datetime+"</td></tr>";
+				no++;
+			} 
+			$('#tpnet_list').html(htmlData);               
+			$('#result_count').html(no-1);   
+			
+			//次一港(國家)
+			htmlData = '';
+			for(id in second_port_country_list){
+				second_port_country = second_port_country_list[id]['second_port_country'] 
+				htmlData = htmlData + '<option value="'+second_port_country+'">'+second_port_country+'</option>';
+			}
+			$('#second_port_country_search').html(htmlData);
+			
+			//次一港(城市)
+			city_list = second_port_city_list[second_port_country_list[0]['second_port_country']]
+			htmlData = ''
+			for(i in city_list){
+				second_port_city = city_list[i]
+				htmlData = htmlData + '<option value="'+second_port_city+'">'+second_port_city+'</option>';
+			}
+			
+			$('#second_port_city_search').html(htmlData);
+			
+			$('#city_search').val('KHH');
+			change_result();
+		},				
+		error: function(xhr) {
+		  alert('getTpnet 發生錯誤:'+JSON.stringify(xhr)); 
+		}
+	});			
+	
+	//$('#city_search').html('高雄');
+}
+
+$(document).ready(function(){
+	getTpnet();
+	$( ".changeItemSearch" ).change(function() {
+		setTimeout(function() {
+		  change_result()
+		}, 200);  
+	  
+	});
+	
+	$( "#second_port_country_search" ).change(function() {
+		city_list = second_port_city_list[this.value]
+		htmlData = ''
+		for(i in city_list){
+			second_port_city = city_list[i]
+			htmlData = htmlData + '<option value="'+second_port_city+'">'+second_port_city+'</option>';
+		}		
+		$('#second_port_city_search').html(htmlData);		
+	});	
+	//20210419 慶世，預報進港時間From 預設今天
+	var today = new Date();
+	var dd = String(today.getDate()).padStart(2, '0');
+	var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+	var yyyy = today.getFullYear();
+
+	today = yyyy+'-'+mm+'-'+dd ;
+	$('#scheduled_arrival_datetime_from').val(today);
+	
+});	
+
+function change_result(){
+	city_search = $( "#city_search" ).val().trim();
+	imo_search = $( "#imo_search" ).val().trim();
+	shipname_en_search = $( "#shipname_en_search" ).val().trim();
+	scheduled_arrival_datetime_from = $( "#scheduled_arrival_datetime_from" ).val().trim();
+	scheduled_arrival_datetime_to = $( "#scheduled_arrival_datetime_to" ).val().trim();
+	second_port_country_search = $( "#second_port_country_search" ).val().trim();
+	second_port_city_search = $( "#second_port_city_search" ).val().trim();
+	
+	//alert('city_search:'+city_search+' imo_search:'+imo_search+' shipname_en_search:'+shipname_en_search+' from:'+scheduled_departure_datetime_from+' to:'+scheduled_departure_datetime_to)
+	console.log('change_result:')
+	console.log(' city_search: '+city_search+'\n imo_search: '+imo_search+'\n shipname_en_search: '+shipname_en_search+'\n scheduled_arrival_datetime_from:'+scheduled_arrival_datetime_from+'\n scheduled_arrival_datetime_to:'+scheduled_arrival_datetime_to+'\n second_port_country_search: '+second_port_country_search+'\n second_port_city_search: '+second_port_city_search)
+	htmlData = "";			
+	no = 1;
+	
+	for(i in tpnet_list){
+		ship_call_sign = tpnet_list[i]['ship_call_sign'] === null ? '' : tpnet_list[i]['ship_call_sign'];
+		ship_type = tpnet_list[i]['ship_type']
+		shipname_en = tpnet_list[i]['shipname_en']
+		if(shipname_en_search != ''){ 
+			if(shipname_en == '')
+				continue;
+			else if(!shipname_en.includes(shipname_en_search))
+				continue;			
+		}
+		
+		visa = tpnet_list[i]['visa']
+		scheduled_arrival_datetime = tpnet_list[i]['scheduled_arrival_datetime']
+		 
+		console.log(scheduled_arrival_datetime.substring(0, 10))
+		if(scheduled_arrival_datetime_from != '' && scheduled_arrival_datetime_from > scheduled_arrival_datetime.substring(0, 10)){
+ 			continue;
+		}
+		//2021-04-12
+	 
+		if(scheduled_arrival_datetime_to != '' && scheduled_arrival_datetime_to < scheduled_arrival_datetime.substring(0, 10)){
+ 			continue;
+		}
+		scheduled_berthing_datetime = tpnet_list[i]['scheduled_berthing_datetime'] === null ? '' : tpnet_list[i]['scheduled_berthing_datetime']
+		berthing = tpnet_list[i]['berthing'] === null ? '' : tpnet_list[i]['berthing']
+		former_port = tpnet_list[i]['former_port']
+		vhf_datetime = tpnet_list[i]['vhf_datetime'] === null ? '' : tpnet_list[i]['vhf_datetime']
+		length_m = tpnet_list[i]['length_m']
+		anchor_datetime = tpnet_list[i]['anchor_datetime'] === null ? '' : tpnet_list[i]['anchor_datetime'];
+		
+		imo = tpnet_list[i]['imo'] === null ? '' : tpnet_list[i]['imo'].toString()
+		if(imo_search != ''){ 
+			if(imo == '')
+				continue;
+			else if(!imo.includes(imo_search))
+				continue;			
+		}
+		agent_name = tpnet_list[i]['agent_name']
+		shipname_tw = tpnet_list[i]['shipname_tw']
+		action = tpnet_list[i]['action']
+		through_port_datetime = tpnet_list[i]['through_port_datetime'] === null ? '' : tpnet_list[i]['through_port_datetime']
+		scheduled_departure_datetime = tpnet_list[i]['scheduled_departure_datetime'] === null ? '' : tpnet_list[i]['scheduled_departure_datetime']		
+		berthing_datetime = tpnet_list[i]['berthing_datetime'] === null ? '' : tpnet_list[i]['berthing_datetime']
+		second_port_country = tpnet_list[i]['second_port_country']
+		if(second_port_country_search != '全部' && second_port_country != second_port_country_search){
+			continue;
+		}
+		
+		second_port_city = tpnet_list[i]['second_port_city']
+		if(second_port_city_search != '全部' && second_port_city != second_port_city_search){
+			continue;
+		}
+		captain_eta = tpnet_list[i]['captain_eta'] === null ? '' : tpnet_list[i]['captain_eta']
+		tonnage = tpnet_list[i]['tonnage']
+		five_miles_datetime = tpnet_list[i]['five_miles_datetime'] === null ? '' : tpnet_list[i]['five_miles_datetime']
+		
+		city = tpnet_list[i]['city']
+		if(city_search != 'all' && city != city_search){
+			continue;
+		}
+		switch (city) {
+		  case 'KEL':
+			city = '基隆'
+			break;
+		  case 'TXG':
+			city = '台中'
+			break;
+		  case 'TPE':
+			city = '台北'
+			break;
+		  default:
+			city = '高雄'
+		}
+		
+		//creationdate = tpnet_list[i]['creationdate'] 
+		
+		htmlData = htmlData+"<tr style='border-top:1.5px #c2c2d6 solid;color:#0000b3;'><td>"+no+"</td>";
+		htmlData = htmlData+"<td>"+ship_call_sign+"</td>";
+		htmlData = htmlData+"<td>"+ship_type+"</td>";
+		htmlData = htmlData+"<td>"+shipname_en+"</td>";
+		htmlData = htmlData+"<td>"+visa+"</td>";
+		htmlData = htmlData+"<td>"+scheduled_arrival_datetime+"</td>";
+		htmlData = htmlData+"<td>"+scheduled_berthing_datetime+"</td>";
+		htmlData = htmlData+"<td>"+berthing+"</td>";
+		htmlData = htmlData+"<td>"+former_port+"</td>";
+		htmlData = htmlData+"<td>"+vhf_datetime+"</td>";
+		htmlData = htmlData+"<td>"+length_m+"</td>";
+		htmlData = htmlData+"<td>"+anchor_datetime+"</td></tr>";
+		
+		htmlData = htmlData+"<tr style='color:#663300;' ><td>"+city+"</td>";
+		htmlData = htmlData+"<td>"+imo+"</td>";
+		htmlData = htmlData+"<td>"+agent_name+"</td>";
+		htmlData = htmlData+"<td>"+shipname_tw+"</td>";
+		htmlData = htmlData+"<td>"+action+"</td>";
+		htmlData = htmlData+"<td>"+through_port_datetime+"</td>";
+		htmlData = htmlData+"<td>"+scheduled_departure_datetime+"</td>";
+		htmlData = htmlData+"<td>"+berthing_datetime+"</td>";
+		htmlData = htmlData+"<td>"+second_port_country+' '+second_port_city+"</td>";
+		htmlData = htmlData+"<td>"+captain_eta+"</td>";
+		htmlData = htmlData+"<td>"+tonnage+"</td>";
+		htmlData = htmlData+"<td>"+five_miles_datetime+"</td></tr>";
+		no++;
+	} 
+	$('#tpnet_list').html(htmlData);               
+	$('#result_count').html(no-1);   
+}
+
+</script>
+<section class="content-header">
+  <h1>
+    船況查詢
+    <small>基隆/台北/台中/高雄港船舶查詢</small>
+  </h1>
+  <ol class="breadcrumb">
+    <!-- TODO -->
+    <li><a href="#"><i class="fa fa-dashboard"></i>首頁</a></li>
+    <li class="active">船況查詢</li>
+  </ol>
+</section>
+
+<!-- Main content -->
+<section class="content">
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title">進港船舶表</h3><br>
+		  更新時間:<span id="creationdate"></span> &nbsp;&nbsp;&nbsp;&nbsp;來源網站:https://tpnet.twport.com.tw/IFAWeb/CMS
+        </div>
+        <!-- /.box-header -->
+        <div class="box-body">
+		  <div class="margin">	
+            <div class="btn-group" style="width:80px;">
+              <label>港口</label>
+                <select class="form-control changeItemSearch" id="city_search" >                  
+				  <option value="all">全部</option>
+                  <option value="KEL">基隆</option>
+                  <option value="TPE">台北</option>
+                  <option value="TXG">台中</option>
+                  <option value="KHH">高雄</option>
+                </select>
+            </div>
+			
+		    <div class="btn-group" style="margin-left:10px;">
+			  <label for=" " class="">IMO</label>
+			  <input type="text" class="form-control changeItemSearch" style="width:100px;" placeholder=" " id="imo_search">
+			</div>
+			
+			<div class="btn-group" style="margin-left:10px;">
+			  <label for=" " class="">英文船名</label>
+			  <input type="text" class="form-control changeItemSearch" placeholder=" " id="shipname_en_search">
+			</div>
+			
+			<div class="btn-group" style="margin-left:10px;">
+			  <label for=" " class="">預報進港時間From</label>
+			  <input type="text" class="form-control changeItemSearch" style="width:120px;" placeholder="YYYY-MM-DD" id="scheduled_arrival_datetime_from">
+			</div>
+			<span style="bottom:-13px;font-size:30px;position: relative;">&nbsp;~</span>
+			<div class="btn-group" style="margin-left:10px;">
+			  <label for=" " class="">預報進港時間To</label>
+			  <input type="text" class="form-control changeItemSearch" style="width:120px;" placeholder="YYYY-MM-DD" id="scheduled_arrival_datetime_to">
+			</div>
+
+			<div class="btn-group" style="width:150px;">
+              <label>次一港(國家)</label>
+                <select class="form-control changeItemSearch" id="second_port_country_search">
+                  
+                </select>
+            </div>
+			
+			<div class="btn-group" style="width:130px;">
+              <label>次一港(城市)</label>
+                <select class="form-control changeItemSearch" id="second_port_city_search">
+                </select>
+            </div>
+			
+		  </div> 
+                 
+                
+        搜尋結果共有 : <span id="result_count" style="font-size:16px;color:#F71607;"></span> 筆
+		<br>
+           <table class="table table-bordered text-center">
+                <thead>
+                  <tr bgcolor="#99ccff" style="color:#0000b3;"> 
+				    <th>no</th>
+                    <th>船舶呼號</th>
+                    <th>船種</th>  
+					<th>英文船名</th>
+                    <th>簽證編號</th>
+					<th>預報進港時間</th>  
+					<th>預定靠泊時間</th>
+                    <th>靠泊碼頭</th>
+					<th>前一港</th>  
+					<th>VHF報到時間</th>
+                    <th>船長(M)</th>
+					<th>下錨時間</th>  
+				  </tr>
+				  <tr bgcolor="#ffecb3" style="color:#663300;">                  				  
+				    <th>港市</th>
+					<th>IMO</th>
+                    <th>港口代理</th>
+					<th>中文船名</th>
+					<th>到港目的</th>  
+					<th>進港通過港口時間</th>
+                    <th>預定離泊時間</th>
+					<th>靠泊時間</th>  
+					<th>次一港</th>
+                    <th>船長報到ETA</th>
+					<th>總噸</th>
+					<th>進港通過5浬時間</th>
+				  </tr>
+<!--			
+1.ship_call_sign, 船舶呼號	
+2.imo, IMO
+
+3.ship_type, 船種	
+4.agent_name, 港口代理
+
+5.shipname_en, 英文船名
+6.shipname_tw, 中文船名 
+
+7.visa, 簽證編號
+8.action, 到港目的
+9.scheduled_arrival_datetime, 預報進港時間	
+10.through_port_datetime, 進港通過港口時間
+11.scheduled_berthing_datetime, 預定靠泊時間
+
+12.scheduled_departure_datetime, 預定離泊時間
+13.berthing, 靠泊碼頭
+14.berthing_datetime, 靠泊時間
+15.former_port, 前一港	
+16.second_port, 次一港
+17.vhf_datetime, VHF報到時間	
+18.captain_eta, 船長報到ETA
+19.length_m, 船長(M)	
+20.tonnage, 總噸
+21.anchor_datetime, 下錨時間
+22.five_miles_datetime, 進港通過5浬時間
+23.city, 城市(基/北/中/高)
+-->
+									
+                  
+                </thead>
+                <tbody id="tpnet_list" style="font-size:14px;">              
+                </tbody> 
+              </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section> 
